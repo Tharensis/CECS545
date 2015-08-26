@@ -2,9 +2,15 @@
 	<head>
 		<title>Project 1</title>
 		<script src="scripts/main.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/project1.css">
 	</head>
 	<body>
-		<input type="file" id="files" name="files[]" />
-		<button onclick='main(document.getElementById("files"))' >Read</button>
+		<div id="input">
+			<input type="file" id="files" name="files[]" />
+			<button id ="runButton" onclick='main(document.getElementById("files"))' >Read</button>
+		</div>
+		<div id="results">
+			Results
+		</div>
 	</body>
 </html>

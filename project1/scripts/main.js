@@ -42,6 +42,8 @@ function parseData(fileData) {
 	var minimumDistance = 0;
 	var minimumPath;
 
+	var startTime = new Date().getTime();
+
 	for(n = 0; n < factorial(array.length) - 1; n++) {
 		if(n == 0) {
 			totalDistance = calculateDistance(array);
@@ -56,13 +58,23 @@ function parseData(fileData) {
 			minimumPath = JSON.parse(JSON.stringify(array));
 		}
 	}
+
+	var endTime = new Date().getTime();
+
+	// Adds the original city to the end of the path.
 	minimumPath.push(minimumPath[0]);
-	console.log("Minimum path: " + minimumPath);
-	console.log("Minimum distance: " + minimumDistance);
-	console.log("Done: " + xCoords.length);
+
+	displayResult(minimumPath, minimumDistance, endTime - startTime);
 
 	xCoords.length = 0;
 	yCoords.length = 0;
+}
+
+function displayResult(path, distance, time) {
+	var node = document.createElement("DIV");
+	var textnode = document.createTextNode("Number of Cities: " + (path.length - 1) + " Path: " + path + " Distance: " + distance + " Time: " + time/1000 + "s");
+	node.appendChild(textnode);
+	document.getElementById("results").appendChild(node);
 }
 
 // Generates all permutations based on number of cities
