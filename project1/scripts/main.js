@@ -39,17 +39,28 @@ function parseData(fileData) {
 	}
 
 	var totalDistance = 0;
+	var minimumDistance = 0;
+	var minimumPath;
 
 	for(n = 0; n < factorial(array.length) - 1; n++) {
 		if(n == 0) {
 			totalDistance = calculateDistance(array);
+			minimumDistance = totalDistance;
+			minimumPath = JSON.parse(JSON.stringify(array));
 		} else {
 			nextPermute(array);
 			totalDistance = calculateDistance(array);
 		}
-		console.log("Total: " + totalDistance);
+		if(totalDistance < minimumDistance) {
+			minimumDistance = totalDistance;
+			minimumPath = JSON.parse(JSON.stringify(array));
+		}
 	}
+	minimumPath.push(minimumPath[0]);
+	console.log("Minimum path: " + minimumPath);
+	console.log("Minimum distance: " + minimumDistance);
 	console.log("Done: " + xCoords.length);
+
 	xCoords.length = 0;
 	yCoords.length = 0;
 }
@@ -89,19 +100,25 @@ function nextPermute(array) {
 
 // Calculates the distance for a given permutation
 function calculateDistance(perm) {
-	console.log(perm);
 	var totalDistance = 0;
 
 	var i = 0;
-	for(i = 0; i < perm.length - 1; i++) {
-		var x2 = xCoords[perm[i + 1]];
-		var x1 = xCoords[perm[i]];
-		var y2 = yCoords[perm[i + 1]];
-		var y1 = yCoords[perm[i]];
+	for(i = 0; i < perm.length; i++) {
+		// If last iteration, complete round trip
+		if(i != perm.length - 1) {
+			var x2 = xCoords[perm[i + 1]];
+			var x1 = xCoords[perm[i]];
+			var y2 = yCoords[perm[i + 1]];
+			var y1 = yCoords[perm[i]];
+		} else {
+			var x2 = xCoords[perm[0]];
+			var x1 = xCoords[perm[i]];
+			var y2 = yCoords[perm[0]];
+			var y1 = yCoords[perm[i]];
+		}
 
 		var distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 		totalDistance += distance;
-		console.log(distance);
 	}
 	return totalDistance;
 }
