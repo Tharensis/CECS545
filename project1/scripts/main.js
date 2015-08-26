@@ -32,17 +32,24 @@ function parseData(fileData) {
 	}
 
 	// Fills array with initial permutation of cities
-	var permutations = [];
-	for(i in xCoords) {
-		permutations[i] = i;
-	}
 
-	permute(permutations);
-	console.log("Done: " + permutations.length);
+	var num = permute(xCoords.length);
+	console.log(num);
 }
 
-// Generates permutations based on number of cities
-function permute(array) {
+// Generates all permutations based on number of cities
+function permute(numCities) {
+
+	var array = [];
+	var n = 0;
+	for(n = 0; n < numCities; n++) {
+		array[n] = n;
+	}
+
+	var allPermutations = [];
+
+	// Hacky way to copy data instead of reference
+	allPermutations.push(JSON.parse(JSON.stringify(array)));
 
 	var i = 0;
 	var r = array.length;
@@ -72,7 +79,10 @@ function permute(array) {
 			p++;
 			q--;
 		}
+
+		allPermutations.push(JSON.parse(JSON.stringify(array)));
 	}
+	return allPermutations;
 }
 
 // Math functions
