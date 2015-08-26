@@ -32,29 +32,33 @@ function parseData(fileData) {
 	}
 
 	// Fills array with initial permutation of cities
-
-	var num = permute(xCoords.length);
-	console.log(num);
-}
-
-// Generates all permutations based on number of cities
-function permute(numCities) {
-
 	var array = [];
 	var n = 0;
-	for(n = 0; n < numCities; n++) {
+	for(n = 0; n < xCoords.length; n++) {
 		array[n] = n;
 	}
 
-	var allPermutations = [];
+	var totalDistance = 0;
 
-	// Hacky way to copy data instead of reference
-	allPermutations.push(JSON.parse(JSON.stringify(array)));
+	for(n = 0; n < factorial(array.length) - 1; n++) {
+		if(n == 0) {
+			totalDistance = calculateDistance(array);
+		} else {
+			nextPermute(array);
+			totalDistance = calculateDistance(array);
+		}
+		console.log("Total: " + totalDistance);
+	}
+	console.log("Done: " + xCoords.length);
+	xCoords.length = 0;
+	yCoords.length = 0;
+}
 
-	var i = 0;
+// Generates all permutations based on number of cities
+function nextPermute(array) {
+
 	var r = array.length;
 	// This is modified code from my past CECS 310 project
-	for(i = 1; i < factorial(r); i++) {
 		var m = r - 2;
 		while(array[m] > array[m + 1]) {
 			m--;
@@ -80,9 +84,26 @@ function permute(numCities) {
 			q--;
 		}
 
-		allPermutations.push(JSON.parse(JSON.stringify(array)));
+	return array;
+}
+
+// Calculates the distance for a given permutation
+function calculateDistance(perm) {
+	console.log(perm);
+	var totalDistance = 0;
+
+	var i = 0;
+	for(i = 0; i < perm.length - 1; i++) {
+		var x2 = xCoords[perm[i + 1]];
+		var x1 = xCoords[perm[i]];
+		var y2 = yCoords[perm[i + 1]];
+		var y1 = yCoords[perm[i]];
+
+		var distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+		totalDistance += distance;
+		console.log(distance);
 	}
-	return allPermutations;
+	return totalDistance;
 }
 
 // Math functions
