@@ -44,7 +44,7 @@ function parseData(fileData) {
 
 	var startTime = new Date().getTime();
 
-	for(n = 0; n < factorial(array.length) - 1; n++) {
+	for(n = 0; n < factorial(array.length - 1); n++) {
 		if(n == 0) {
 			totalDistance = calculateDistance(array);
 			minimumDistance = totalDistance;
@@ -57,6 +57,7 @@ function parseData(fileData) {
 			minimumDistance = totalDistance;
 			minimumPath = JSON.parse(JSON.stringify(array));
 		}
+		//console.log(array);
 	}
 
 	var endTime = new Date().getTime();
