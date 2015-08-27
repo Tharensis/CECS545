@@ -152,7 +152,6 @@ function generateDistanceTable() {
 	for(x = 0; x < xCoords.length; x++) {
 		for(y = 0; y < yCoords.length; y++) {
 			distanceTable[x][y] = distance(x, y);
-			console.log(x + " " + y);
 		}
 	}
 }
