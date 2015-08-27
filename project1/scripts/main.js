@@ -1,6 +1,7 @@
 // Global variables
 var xCoords = [];
 var yCoords = [];
+var distanceTable = [];
 
 function main(filePath) {
 	readFile(filePath);
@@ -31,6 +32,8 @@ function parseData(fileData) {
 		yCoords[i - 7] = splitLine[2];
 	}
 
+	generateDistanceTable();
+
 	// Fills array with initial permutation of cities
 	var array = [];
 	var n = 0;
@@ -46,12 +49,14 @@ function parseData(fileData) {
 
 	for(n = 0; n < factorial(array.length - 1); n++) {
 		if(n == 0) {
-			totalDistance = calculateDistance(array);
+			//totalDistance = calculateDistance(array);
+			totalDistance = getDistance(array);
 			minimumDistance = totalDistance;
 			minimumPath = JSON.parse(JSON.stringify(array));
 		} else {
 			nextPermute(array);
-			totalDistance = calculateDistance(array);
+			//totalDistance = calculateDistance(array);
+			totalDistance = getDistance(array);
 		}
 		if(totalDistance < minimumDistance) {
 			minimumDistance = totalDistance;
@@ -111,26 +116,19 @@ function nextPermute(array) {
 	return array;
 }
 
-// Calculates the distance for a given permutation
-function calculateDistance(perm) {
+function getDistance(perm) {
 	var totalDistance = 0;
 
 	var i = 0;
 	for(i = 0; i < perm.length; i++) {
-		// If last iteration, complete round trip
 		if(i != perm.length - 1) {
-			var x2 = xCoords[perm[i + 1]];
-			var x1 = xCoords[perm[i]];
-			var y2 = yCoords[perm[i + 1]];
-			var y1 = yCoords[perm[i]];
+			var city2 = perm[i + 1];
+			var city1 = perm[i];
 		} else {
-			var x2 = xCoords[perm[0]];
-			var x1 = xCoords[perm[i]];
-			var y2 = yCoords[perm[0]];
-			var y1 = yCoords[perm[i]];
+			var city2 = perm[0];
+			var city1 = perm[i];
 		}
-
-		var distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+		var distance = distanceTable[city1][city2];
 		totalDistance += distance;
 	}
 	return totalDistance;
@@ -144,6 +142,35 @@ function factorial(num) {
 		
 	}
 	return result;
+}
+
+// Generates lookup table based on point data
+function generateDistanceTable() {
+	var x = 0;
+	var y = 0;
+	create2DArray();
+	for(x = 0; x < xCoords.length; x++) {
+		for(y = 0; y < yCoords.length; y++) {
+			distanceTable[x][y] = distance(x, y);
+			console.log(x + " " + y);
+		}
+	}
+}
+
+function create2DArray() {
+	for (var i=0;i<xCoords.length;i++) {
+		distanceTable[i] = [];
+	}
+}
+
+function distance(city1, city2) {
+	var x2 = xCoords[city2];
+	var x1 = xCoords[city1];
+	var y2 = yCoords[city2];
+	var y1 = yCoords[city1];
+
+	var distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+	return distance;
 }
 
 function sleep(milliseconds) {
