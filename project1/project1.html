@@ -7,10 +7,17 @@
 	<body>
 		<div id="input">
 			<input type="file" id="files" name="files[]" />
-			<button id ="runButton" onclick='main(document.getElementById("files"))' >Read</button>
+			<button id ="runButton" onclick='main(document.getElementById("files"))' >Calculate</button>
 		</div>
 		<div id="results">
-			Results
+			<table id="resultTable" >
+				<tr>
+					<th>Number of Cities</th>
+					<th>Path</th>
+					<th>Distance</th>
+					<th>Time</th>
+				</tr>
+			</table>
 		</div>
 	</body>
 </html>

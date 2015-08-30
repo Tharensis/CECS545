@@ -77,10 +77,22 @@ function parseData(fileData) {
 }
 
 function displayResult(path, distance, time) {
-	var node = document.createElement("DIV");
-	var textnode = document.createTextNode("Number of Cities: " + (path.length - 1) + " Path: " + path + " Distance: " + distance + " Time: " + time/1000 + "s");
-	node.appendChild(textnode);
-	document.getElementById("results").appendChild(node);
+	// Loop to fix city indexes
+	for(i in path) {
+		path[i] += 1;
+	}
+	
+	var table = document.getElementById("resultTable");
+	var row = table.insertRow();
+	var cell1 = row.insertCell(0);
+	var cell2 = row.insertCell(1);
+	var cell3 = row.insertCell(2);
+	var cell4 = row.insertCell(3);
+
+	cell1.innerHTML = path.length - 1;
+	cell2.innerHTML = path;
+	cell3.innerHTML = distance;
+	cell4.innerHTML = time/1000 + "s";
 }
 
 // Generates all permutations based on number of cities
@@ -170,13 +182,4 @@ function distance(city1, city2) {
 
 	var distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 	return distance;
-}
-
-function sleep(milliseconds) {
-	  var start = new Date().getTime();
-	    for (var i = 0; i < 1e7; i++) {
-			    if ((new Date().getTime() - start) > milliseconds){
-					      break;
-						      }
-				  }
 }
