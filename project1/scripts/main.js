@@ -3,6 +3,7 @@ var xCoords = [];
 var yCoords = [];
 var distanceTable = [];
 
+// This function is called by the HTML file.
 function main(filePath) {
 	readFile(filePath);
 	// Sent to read the file
@@ -25,11 +26,23 @@ function readFile(filePath) {
 function parseData(fileData) {
 	var splitFile = fileData.split("\n");
 
-	// Stores coordinate data in two global arrays
-	for(i = 7; i < splitFile.length - 1; i++) {
+	// Stores coordinate data in two global arrays after finding where the coordinates are in the file
+	var bool_coordIndex = false;
+	for(i = 0; i < splitFile.length - 1; i++) {
+		// Checking where NODE_COORD_SECTION is
+		if(!bool_coordIndex && splitFile[i].indexOf("NODE_COORD_SECTION") != -1) {
+			bool_coordIndex = true;
+			continue;
+		}
+		console.log(splitFile[i]);
 		var splitLine = splitFile[i].split(" ");
-		xCoords[i - 7] = splitLine[1];
-		yCoords[i - 7] = splitLine[2];
+		xCoords[splitLine[0] - 1] = splitLine[1];
+		yCoords[splitLine[0] - 1] = splitLine[2];
+	}
+
+	if(!bool_coordIndex) {
+		alert("ERROR: No NODE_COORD_SECTION found.");
+		return;
 	}
 
 	generateDistanceTable();
@@ -47,22 +60,20 @@ function parseData(fileData) {
 
 	var startTime = new Date().getTime();
 
+	// Generates all permutations and looks up distance for each
 	for(n = 0; n < factorial(array.length - 1); n++) {
 		if(n == 0) {
-			//totalDistance = calculateDistance(array);
 			totalDistance = getDistance(array);
 			minimumDistance = totalDistance;
 			minimumPath = JSON.parse(JSON.stringify(array));
 		} else {
 			nextPermute(array);
-			//totalDistance = calculateDistance(array);
 			totalDistance = getDistance(array);
 		}
 		if(totalDistance < minimumDistance) {
 			minimumDistance = totalDistance;
 			minimumPath = JSON.parse(JSON.stringify(array));
 		}
-		//console.log(array);
 	}
 
 	var endTime = new Date().getTime();
@@ -76,6 +87,7 @@ function parseData(fileData) {
 	yCoords.length = 0;
 }
 
+// Adds a row to the result table
 function displayResult(path, distance, time) {
 	// Loop to fix city indexes
 	for(i in path) {
