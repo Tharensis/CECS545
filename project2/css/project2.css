@@ -1,0 +1,21 @@
+#input {
+	text-align: center;
+}
+
+#results {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 50px;
+	width: 75%;
+}
+
+table {
+	border: 1px solid black;
+	width: 100%;
+}
+
+th,td {
+	border: 1px solid black;
+	width: 25%;
+}

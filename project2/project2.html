@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<title>Project 2</title>
+		<script src="scripts/main.js"></script>
+		<script src="scripts/Queue.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/project2.css">
+	</head>
+	<body>
+		<div id="input">
+			<input type="file" id="files" name="files[]" accept=".tsp" />
+			<button id ="runButton" onclick='main(document.getElementById("files"))' >Calculate</button>
+		</div>
+		<div id="results">
+			<table id="resultTable" >
+				<tr>
+					<th>Number of Cities</th>
+					<th>Path</th>
+					<th>Distance</th>
+					<th>Time</th>
+				</tr>
+			</table>
+		</div>
+	</body>
+</html>
