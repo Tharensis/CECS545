@@ -61,11 +61,36 @@ function parseData(fileData) {
 	breadthFirst(1, 11);	
 }
 
+// Will find shortest number of cities (with number tie breakers)
+// But will not necessarily be the shortest path
+// As BFS has, by definition, no weighted edges
 function breadthFirst(start, end) {
 	var queue = new Queue();
 	queue.enqueue([start]);
 	while(queue.length != 0) {
 		var path = queue.dequeue();
+		var node = path[path.length - 1];
+		if(node == end) {
+			return path;
+		}
+		var i;
+		for(i = 0; i < graph[node].length; i++) {
+			var newPath = JSON.parse(JSON.stringify(path)); // Deep copy instead of shallow copy
+			newPath.push(graph[node][i]);
+			queue.enqueue(newPath);
+		}
+	}
+}
+
+// Will find the first path via depth-first search.
+// Will almost certainly not be smallest number of cities
+// Explained in report
+function depthFirst(start, end) {
+	var queue = [];
+	queue.push([start]);
+	var i;
+	while(queue.length) {
+		var path = queue.shift();
 		console.log("Path: ");
 		console.log(path);
 		var node = path[path.length - 1];
@@ -76,14 +101,29 @@ function breadthFirst(start, end) {
 			return path;
 		}
 		console.log("Adjacent list: " + graph[node]);
+
+		if(!graph[node]) {
+			// Must have no neighbors
+			console.log("No neighbors");
+			queue.shift();
+			continue;
+		}
+
 		var i;
+		var newPaths = [];
+		// Adds paths with next nodes added to the front of the list.
 		for(i = 0; i < graph[node].length; i++) {
 			console.log("Adjacent" + graph[node][i]);
 			var newPath = JSON.parse(JSON.stringify(path)); // Deep copy instead of shallow copy
 			newPath.push(graph[node][i]);
-			queue.enqueue(newPath);
-			console.log("New Queue: " + queue);
+			newPaths.push(newPath);
+			console.log("Working newPaths set: " + newPaths);
 		}
+		// Loop to add elements of newPaths to queue
+		for(i = newPaths.length - 1; i >= 0; i--) {
+			queue.unshift(newPaths[i]);
+		}
+		console.log("New Queue: " + queue);
 	}
 }
 
