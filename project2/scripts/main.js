@@ -2,7 +2,21 @@
 var xCoords = [];
 var yCoords = [];
 var distanceTable = [];
-var graph = [[],[2,3,4],[3],[4,5],[5,6,7],[7,8],[8],[9,10],[9,10,11],[11],[11]];
+var paths = [1];
+
+// Directed graph containing
+var graph = {
+			1: [2, 3, 4],
+			2: [3],
+			3: [4, 5],
+			4: [5, 6, 7],
+			5: [7, 8],
+			6: [8],
+			7: [9, 10],
+			8: [9, 10, 11],
+			9: [11],
+			10:[11]
+}
 
 // This function is called by the HTML file.
 function main(filePath) {
@@ -35,7 +49,6 @@ function parseData(fileData) {
 			bool_coordIndex = true;
 			continue;
 		}
-		console.log(splitFile[i]);
 		var splitLine = splitFile[i].split(" ");
 		xCoords[splitLine[0] - 1] = splitLine[1];
 		yCoords[splitLine[0] - 1] = splitLine[2];
@@ -45,47 +58,33 @@ function parseData(fileData) {
 		alert("ERROR: No NODE_COORD_SECTION found.");
 		return;
 	}
+	breadthFirst(1, 11);	
+}
 
-	generateDistanceTable();
-
-	// Fills array with initial permutation of cities
-	var array = [];
-	var n = 0;
-	for(n = 0; n < xCoords.length; n++) {
-		array[n] = n;
-	}
-
-	var totalDistance = 0;
-	var minimumDistance = 0;
-	var minimumPath;
-
-	var startTime = new Date().getTime();
-
-	// Generates all permutations and looks up distance for each
-	for(n = 0; n < factorial(array.length - 1); n++) {
-		if(n == 0) {
-			totalDistance = getDistance(array);
-			minimumDistance = totalDistance;
-			minimumPath = JSON.parse(JSON.stringify(array));
-		} else {
-			nextPermute(array);
-			totalDistance = getDistance(array);
+function breadthFirst(start, end) {
+	var queue = [];
+	queue.push([start]);
+	while(queue.length != 0) {
+		var path = queue.shift();
+		console.log("Path: ");
+		console.log(path);
+		var node = path[path.length - 1];
+		console.log("Node: ");
+		console.log(node);
+		if(node == end) {
+			console.log("Returning path: " + path);
+			return path;
 		}
-		if(totalDistance < minimumDistance) {
-			minimumDistance = totalDistance;
-			minimumPath = JSON.parse(JSON.stringify(array));
+		console.log("Adjacent list: " + graph[node]);
+		var i;
+		for(i = 0; i < graph[node].length; i++) {
+			console.log("Adjacent" + graph[node][i]);
+			var newPath = JSON.parse(JSON.stringify(path)); // Deep copy instead of shallow copy
+			newPath.push(graph[node][i]);
+			queue.push(newPath);
+			console.log("New Queue: " + queue);
 		}
 	}
-
-	var endTime = new Date().getTime();
-
-	// Adds the original city to the end of the path.
-	minimumPath.push(minimumPath[0]);
-
-	displayResult(minimumPath, minimumDistance, endTime - startTime);
-
-	xCoords.length = 0;
-	yCoords.length = 0;
 }
 
 // Adds a row to the result table
