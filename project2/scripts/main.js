@@ -62,10 +62,10 @@ function parseData(fileData) {
 }
 
 function breadthFirst(start, end) {
-	var queue = [];
-	queue.push([start]);
+	var queue = new Queue();
+	queue.enqueue([start]);
 	while(queue.length != 0) {
-		var path = queue.shift();
+		var path = queue.dequeue();
 		console.log("Path: ");
 		console.log(path);
 		var node = path[path.length - 1];
@@ -81,7 +81,7 @@ function breadthFirst(start, end) {
 			console.log("Adjacent" + graph[node][i]);
 			var newPath = JSON.parse(JSON.stringify(path)); // Deep copy instead of shallow copy
 			newPath.push(graph[node][i]);
-			queue.push(newPath);
+			queue.enqueue(newPath);
 			console.log("New Queue: " + queue);
 		}
 	}
