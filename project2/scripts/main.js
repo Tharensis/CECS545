@@ -2,7 +2,6 @@
 var xCoords = [];
 var yCoords = [];
 var distanceTable = [];
-var paths = [1];
 
 // Directed graph containing
 var graph = {
@@ -58,7 +57,12 @@ function parseData(fileData) {
 		alert("ERROR: No NODE_COORD_SECTION found.");
 		return;
 	}
-	breadthFirst(1, 11);	
+
+	if(document.getElementById("breadth").checked)
+		var path = breadthFirst(1, 11);	
+	else
+		var path = depthFirst(1,11);
+	displayResults(path, null,null);
 }
 
 // Will find shortest number of cities (with number tie breakers)
@@ -128,23 +132,31 @@ function depthFirst(start, end) {
 }
 
 // Adds a row to the result table
-function displayResult(path, distance, time) {
-	// Loop to fix city indexes
-	for(i in path) {
-		path[i] += 1;
-	}
-	
-	var table = document.getElementById("resultTable");
-	var row = table.insertRow();
-	var cell1 = row.insertCell(0);
-	var cell2 = row.insertCell(1);
-	var cell3 = row.insertCell(2);
-	var cell4 = row.insertCell(3);
+function displayResults(path, distance, time) {
+	var textOffset = 3;
+	var pointSize = 2;
 
-	cell1.innerHTML = path.length - 1;
-	cell2.innerHTML = path;
-	cell3.innerHTML = distance;
-	cell4.innerHTML = time/1000 + "s";
+	var canvas = document.getElementById("resultCanvas");
+	var ctx = canvas.getContext("2d");
+	ctx.fillStyle = "white";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = "black";
+	ctx.scale(4, 4);
+	ctx.font = "3px Arial";
+	var i;
+	for(i = 0; i < xCoords.length; i++) {
+		var x = parseInt(xCoords[i]);
+		var y = parseInt(yCoords[i]);
+		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
+		ctx.fillText(i + 1, x + 3, y + 3);
+	}
+	ctx.beginPath();
+	ctx.strokeStyle="red";
+	ctx.moveTo(xCoords[path[0] + 1], yCoords[path[0] + 1]);
+	for(i = 0; i < path.length; i++) {
+		ctx.lineTo(xCoords[path[i] - 1], yCoords[path[i] - 1]);
+	}
+	ctx.stroke();
 }
 
 // Generates all permutations based on number of cities

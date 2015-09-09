@@ -10,15 +10,17 @@
 			<input type="file" id="files" name="files[]" accept=".tsp" />
 			<button id ="runButton" onclick='main(document.getElementById("files"))' >Calculate</button>
 		</div>
-		<div id="results">
-			<table id="resultTable" >
-				<tr>
-					<th>Number of Cities</th>
-					<th>Path</th>
-					<th>Distance</th>
-					<th>Time</th>
-				</tr>
-			</table>
+		<div id="selection">
+			<input type="radio" name="search" id="breadth">Breadth-first Search</input>
+			<input type="radio" name="search" id="depth">Depth-first Search</input>
 		</div>
+		<div id="results">
+			<canvas id="resultCanvas" width="400" height="400" style="border:1px solid #000000;">
+				Your browser is unable to display an HTML5 Canvas. Please upgrade to a newer browser
+			</canvas>
+		</div>
+		<noscript>
+			Please enable JavaScript to view the page.
+		</noscript>
 	</body>
 </html>
