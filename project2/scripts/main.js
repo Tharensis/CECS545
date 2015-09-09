@@ -135,6 +135,7 @@ function depthFirst(start, end) {
 function displayResults(path, distance, time) {
 	var textOffset = 3;
 	var pointSize = 2;
+	console.log(path);
 
 	var canvas = document.getElementById("resultCanvas");
 	var ctx = canvas.getContext("2d");
@@ -152,11 +153,11 @@ function displayResults(path, distance, time) {
 	}
 	ctx.beginPath();
 	ctx.strokeStyle="red";
-	ctx.moveTo(xCoords[path[0] + 1], yCoords[path[0] + 1]);
+	ctx.moveTo(xCoords[path[0] - 1], yCoords[path[0] - 1]);
 	for(i = 0; i < path.length; i++) {
 		ctx.lineTo(xCoords[path[i] - 1], yCoords[path[i] - 1]);
+		ctx.stroke();
 	}
-	ctx.stroke();
 }
 
 // Generates all permutations based on number of cities
