@@ -62,7 +62,11 @@ function parseData(fileData) {
 		var path = breadthFirst(1, 11);	
 	else
 		var path = depthFirst(1,11);
-	displayResults(path, null,null);
+
+	console.log(path);
+	var distance = getDistance(path);
+
+	displayResults(path, distance, null);
 }
 
 // Will find shortest number of cities (with number tie breakers)
@@ -95,20 +99,13 @@ function depthFirst(start, end) {
 	var i;
 	while(queue.length) {
 		var path = queue.shift();
-		console.log("Path: ");
-		console.log(path);
 		var node = path[path.length - 1];
-		console.log("Node: ");
-		console.log(node);
 		if(node == end) {
-			console.log("Returning path: " + path);
 			return path;
 		}
-		console.log("Adjacent list: " + graph[node]);
 
 		if(!graph[node]) {
 			// Must have no neighbors
-			console.log("No neighbors");
 			queue.shift();
 			continue;
 		}
@@ -117,34 +114,40 @@ function depthFirst(start, end) {
 		var newPaths = [];
 		// Adds paths with next nodes added to the front of the list.
 		for(i = 0; i < graph[node].length; i++) {
-			console.log("Adjacent" + graph[node][i]);
 			var newPath = JSON.parse(JSON.stringify(path)); // Deep copy instead of shallow copy
 			newPath.push(graph[node][i]);
 			newPaths.push(newPath);
-			console.log("Working newPaths set: " + newPaths);
 		}
 		// Loop to add elements of newPaths to queue
 		for(i = newPaths.length - 1; i >= 0; i--) {
 			queue.unshift(newPaths[i]);
 		}
-		console.log("New Queue: " + queue);
 	}
 }
 
 // Adds a row to the result table
 function displayResults(path, distance, time) {
+	
+	var i;
 	var textOffset = 3;
 	var pointSize = 2;
-	console.log(path);
+	var canvasScale = 4;
 
 	var canvas = document.getElementById("resultCanvas");
 	var ctx = canvas.getContext("2d");
 	ctx.fillStyle = "white";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.fillStyle = "black";
-	ctx.scale(4, 4);
+	ctx.scale(canvasScale, canvasScale);
 	ctx.font = "3px Arial";
-	var i;
+
+	// This loop corrects the y coordinates, so that y doesn't count
+	// from the top of the canvas. It counts from the bottom
+	for(i = 0; i < yCoords.length; i++) {
+		yCoords[i] = (canvas.height / canvasScale) - parseFloat(yCoords[i]);
+		yCoords[i] = yCoords[i].toString();
+	}
+	
 	for(i = 0; i < xCoords.length; i++) {
 		var x = parseInt(xCoords[i]);
 		var y = parseInt(yCoords[i]);
@@ -158,93 +161,22 @@ function displayResults(path, distance, time) {
 		ctx.lineTo(xCoords[path[i] - 1], yCoords[path[i] - 1]);
 		ctx.stroke();
 	}
-}
-
-// Generates all permutations based on number of cities
-function nextPermute(array) {
-
-	var r = array.length;
-	// This is modified code from my past CECS 310 project
-		var m = r - 2;
-		while(array[m] > array[m + 1]) {
-			m--;
-		}
-
-		var k = r - 1;
-		while(array[m] > array[k]) {
-			k--;
-		}
-
-		var tmp = array[m];
-		array[m] = array[k];
-		array[k] = tmp;
-
-		var p = m + 1;
-		var q = r - 1;
-
-		while(p < q) {
-			var tmp = array[p];
-			array[p] = array[q];
-			array[q] = tmp;
-			p++;
-			q--;
-		}
-
-	return array;
+	ctx.fillText("Distance: " + distance, 5, 5);
+	ctx.scale(1 / canvasScale, 1 / canvasScale);
 }
 
 function getDistance(perm) {
 	var totalDistance = 0;
 
 	var i = 0;
-	for(i = 0; i < perm.length; i++) {
+	for(i = 0; i < perm.length - 1; i++) {
 		if(i != perm.length - 1) {
-			var city2 = perm[i + 1];
-			var city1 = perm[i];
-		} else {
-			var city2 = perm[0];
-			var city1 = perm[i];
+			var city2 = perm[i + 1] - 1;
+			var city1 = perm[i] - 1;
 		}
-		var distance = distanceTable[city1][city2];
+		console.log("City 1: " + city1 + " City 2: " + city2);
+		var distance = Math.sqrt(Math.pow(xCoords[city2] - xCoords[city1], 2) + Math.pow(yCoords[city2] - yCoords[city1], 2));
 		totalDistance += distance;
 	}
 	return totalDistance;
-}
-
-// Math functions
-function factorial(num) {
-	var result = 1;
-	for(i = 1; i <= num; i++) {
-		result *= i;
-		
-	}
-	return result;
-}
-
-// Generates lookup table based on point data
-function generateDistanceTable() {
-	var x = 0;
-	var y = 0;
-	create2DArray();
-	for(x = 0; x < xCoords.length; x++) {
-		for(y = 0; y < yCoords.length; y++) {
-			distanceTable[x][y] = distance(x, y);
-		}
-	}
-}
-
-function create2DArray() {
-	for (var i=0;i<xCoords.length;i++) {
-		distanceTable[i] = [];
-	}
-}
-
-function distance(city1, city2) {
-	var x2 = xCoords[city2];
-	var x1 = xCoords[city1];
-	var y2 = yCoords[city2];
-	var y1 = yCoords[city1];
-
-	var distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-	return distance;
 }
