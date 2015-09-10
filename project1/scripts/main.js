@@ -34,7 +34,6 @@ function parseData(fileData) {
 			bool_coordIndex = true;
 			continue;
 		}
-		console.log(splitFile[i]);
 		var splitLine = splitFile[i].split(" ");
 		xCoords[splitLine[0] - 1] = splitLine[1];
 		yCoords[splitLine[0] - 1] = splitLine[2];

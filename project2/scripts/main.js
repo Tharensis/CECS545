@@ -63,7 +63,6 @@ function parseData(fileData) {
 	else
 		var path = depthFirst(1,11);
 
-	console.log(path);
 	var distance = getDistance(path);
 
 	displayResults(path, distance, null);
@@ -174,7 +173,6 @@ function getDistance(perm) {
 			var city2 = perm[i + 1] - 1;
 			var city1 = perm[i] - 1;
 		}
-		console.log("City 1: " + city1 + " City 2: " + city2);
 		var distance = Math.sqrt(Math.pow(xCoords[city2] - xCoords[city1], 2) + Math.pow(yCoords[city2] - yCoords[city1], 2));
 		totalDistance += distance;
 	}
