@@ -1,9 +1,10 @@
 // Global variables
 var xCoords = [];
 var yCoords = [];
-var distanceTable = [];
+var avgBreadth = [];
+var avgDepth = [];
 
-// Directed graph containing
+// Directed graph containing the city connection
 var graph = {
 			1: [2, 3, 4],
 			2: [3],
@@ -58,28 +59,45 @@ function parseData(fileData) {
 		return;
 	}
 
-	if(document.getElementById("breadth").checked)
+	var startTime = window.performance.now();
+	var endTime;
+
+	// Runs search algorithm based on which radio button was checked.
+	if(document.getElementById("breadth").checked) {
 		var path = breadthFirst(1, 11);	
-	else
+		endTime = window.performance.now();
+		avgBreadth.push(endTime - startTime);
+		displayResults(path, getDistance(path), endTime - startTime, avgBreadth);
+	}
+	else if(document.getElementById("depth").checked) {
 		var path = depthFirst(1,11);
-
-	var distance = getDistance(path);
-
-	displayResults(path, distance, null);
+		endTime = window.performance.now();
+		avgDepth.push(endTime - startTime);
+		displayResults(path, getDistance(path), endTime - startTime, avgDepth);
+	} else {
+		alert("No search algorithm selected.");
+	}
 }
 
 // Will find shortest number of cities (with number tie breakers)
 // But will not necessarily be the shortest path
-// As BFS has, by definition, no weighted edges
+// as BFS has, by definition, no weighted edges
 function breadthFirst(start, end) {
+	// Creates queue from external library
 	var queue = new Queue();
 	queue.enqueue([start]);
 	while(queue.length != 0) {
+
+		// Pulls first path from the front of the queue
 		var path = queue.dequeue();
+
+		// Checks last node in path to determine end or neighbors
 		var node = path[path.length - 1];
 		if(node == end) {
 			return path;
 		}
+
+		// Adds paths with next neighbor in line to end of the queue
 		var i;
 		for(i = 0; i < graph[node].length; i++) {
 			var newPath = JSON.parse(JSON.stringify(path)); // Deep copy instead of shallow copy
@@ -93,11 +111,19 @@ function breadthFirst(start, end) {
 // Will almost certainly not be smallest number of cities
 // Explained in report
 function depthFirst(start, end) {
+
+	// Note: variable name is queue, but is not actually looked like a queue
 	var queue = [];
-	queue.push([start]);
+
+	// Initializes array with first node
+	queue.unshift([start]);
 	var i;
 	while(queue.length) {
+
+		// Pulls item off the front of the array
 		var path = queue.shift();
+
+		// Pulls off last item in the removed path to check next neighbor and end state
 		var node = path[path.length - 1];
 		if(node == end) {
 			return path;
@@ -124,8 +150,8 @@ function depthFirst(start, end) {
 	}
 }
 
-// Adds a row to the result table
-function displayResults(path, distance, time) {
+// Displays results on an HTML5 canvas
+function displayResults(path, distance, time, averageArray) {
 	
 	var i;
 	var textOffset = 3;
@@ -160,7 +186,18 @@ function displayResults(path, distance, time) {
 		ctx.lineTo(xCoords[path[i] - 1], yCoords[path[i] - 1]);
 		ctx.stroke();
 	}
+
+	// Calculating average time
+	var average;
+	var sum = 0;
+	for(i in averageArray) {
+		sum += averageArray[i];
+	}
+	average = sum/averageArray.length;
+
 	ctx.fillText("Distance: " + distance, 5, 5);
+	ctx.fillText("Time: " + time + "ms", 5, 8);
+	ctx.fillText("Average: " + average + "ms", 5, 11);
 	ctx.scale(1 / canvasScale, 1 / canvasScale);
 }
 
