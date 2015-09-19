@@ -1,0 +1,21 @@
+<html>
+	<head>
+		<title>Project 3</title>
+		<script src="scripts/main.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/project3.css">
+	</head>
+	<body>
+		<div id="input">
+			<input type="file" id="files" name="files[]" accept=".tsp" />
+			<button id ="runButton" onclick='main(document.getElementById("files"))' >Calculate</button>
+		</div>
+		<div id="results">
+			<canvas id="resultCanvas" width="400" height="400" style="border:1px solid #000000;">
+				Your browser is unable to display an HTML5 Canvas. Please upgrade to a newer browser
+			</canvas>
+		</div>
+		<noscript>
+			Please enable JavaScript to view the page.
+		</noscript>
+	</body>
+</html>
