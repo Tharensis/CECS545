@@ -94,19 +94,20 @@ function findPath(coordinates) {
 	}
 
 	// First two points are chosen randomly as there are no edges to consider
-	//for(i = 0; i < 2; i++) {
-	//	path.push(coordinates.splice(Math.floor(Math.random() * coordinates.length), 1)[0]);
-	//}
-	
 	for(i = 0; i < 2; i++) {
-		path.push(coordinates.splice(0, 1)[0]);
+		path.push(coordinates.splice(Math.floor(Math.random() * coordinates.length), 1)[0]);
 	}
+	path.push(JSON.parse(JSON.stringify(path[0])));
+	
+	//for(i = 0; i < 2; i++) {
+	//	path.push(coordinates.splice(0, 1)[0]);
+	//}
 
 	// Gets first edge hard-coded. Every other edge will be dynamic
 	edges.push(new Line(path[0], path[1]));
 
-	//while(coordinates.length) {
-	for(derp = 0; derp < 1; derp++) {
+	while(coordinates.length) {
+	//for(derp = 0; derp < 5; derp++) {
 		var shortest = {city: 0, 					// Index in coordinates array
 						edge: 0, 					// Index in the edges array
 						distance: Number.MAX_VALUE	// Distance between city and edge
@@ -121,7 +122,8 @@ function findPath(coordinates) {
 			var currentShortestEdge = 0;
 			for(j = 0; j < edges.length; j++) {
 			//	console.log("EDGE: " + j);
-				var currentDistance = pointToLineDistance(coordinates[i], edges[j]);
+				//var currentDistance = pointToLineDistance(coordinates[i], edges[j]);
+				var currentDistance = distToSegment(coordinates[i], path[j], path[j+1]);
 				if(currentDistance < currentShortestDistance) {
 					currentShortestEdge = j;
 					currentShortestDistance = currentDistance;
@@ -140,7 +142,8 @@ function findPath(coordinates) {
 
 		// Inserting edge
 		var toInsert = coordinates.splice(shortest.city, 1);
-		path.splice(shortest.edge, 0, toInsert[0]);
+		console.log(shortest.edge);
+		path.splice(shortest.edge + 1, 0, toInsert[0]);
 		edges[shortest.edge] = new Line(path[shortest.edge], path[shortest.edge + 1]);
 		edges.splice(shortest.edge + 1, 0, new Line(path[shortest.edge + 1], path[shortest.edge + 2]));
 	}
