@@ -1,21 +1,22 @@
 // Global variables
 var xCoords = [];
 var yCoords = [];
-var coordinates = [];
 
 // BEGIN OBJECT DEFINITIONS 
 
-function Point(x, y) {
+function City(x, y, num) {
 	this.x = parseFloat(x);
 	this.y = parseFloat(y);
+	this.num = num;
 }
 
 
 // In the form of ax + by + c = 0
-function Line(x1, y1, x2, y2) {
-	this.a = (y2 - y1)/(x2 - x1);
+function Line(city1, city2) {
+
+	this.a = (city2.y - city1.y)/(city2.x - city1.x);
 	this.b = -1;
-	this.c = y1 - this.a * x1;
+	this.c = city1.y - this.a * city1.x;
 }
 
 // END OBJECT DEFINITIONS
@@ -41,6 +42,7 @@ function readFile(filePath) {
 }
 
 function parseData(fileData) {
+	var coordinates = [];
 	coordinates.length = 0;
 
 	var splitFile = fileData.split("\n");
@@ -58,7 +60,7 @@ function parseData(fileData) {
 			}
 		}
 		var splitLine = splitFile[i].split(" ");
-		coordinates.push(new Point(splitLine[1], splitLine[2]));
+		coordinates.push(new City(splitLine[1], splitLine[2], splitLine[0]));
 	}
 
 	if(!bool_coordIndex) {
@@ -67,17 +69,23 @@ function parseData(fileData) {
 	}
 
 	var startTime = window.performance.now();
-	var path = findPath();
+	var path = findPath(coordinates);
 	var endTime = window.performance.now();
 
-	displayResults(path, null, null, null);
+	//displayResults(path, null, null, null);
 
 	//xCoords.length = 0;
 	//yCoords.length = 0;
 }
 
-function findPath() {
+function findPath(coordinates) {
+	// Coordinates contains the list of cities not currently used yet
+	// Path contains the current path so far.
 	var path = [];
+	// Contains the equations of the lines between city path[i] and city path[i + 1]
+	var edges = [];
+	
+
 	var max = coordinates.length;
 
 	if(coordinates.length <= 2) {
@@ -86,20 +94,89 @@ function findPath() {
 	}
 
 	// First two points are chosen randomly as there are no edges to consider
+	//for(i = 0; i < 2; i++) {
+	//	path.push(coordinates.splice(Math.floor(Math.random() * coordinates.length), 1)[0]);
+	//}
+	
 	for(i = 0; i < 2; i++) {
-		path.push(coordinates.splice(Math.floor(Math.random() * coordinates.length), 1)[0]);
+		path.push(coordinates.splice(0, 1)[0]);
 	}
 
-	/*for(i = 0; i < max; i++) {
-		path.push(coordinates[Math.floor(Math.random() * max * 4 + 1)]);
-	}*/
+	// Gets first edge hard-coded. Every other edge will be dynamic
+	edges.push(new Line(path[0], path[1]));
+
+	//while(coordinates.length) {
+	for(derp = 0; derp < 1; derp++) {
+		var shortest = {city: 0, 					// Index in coordinates array
+						edge: 0, 					// Index in the edges array
+						distance: Number.MAX_VALUE	// Distance between city and edge
+		};
+
+		// Finding next point to insert
+		for(i = 0; i < coordinates.length; i++) {
+			//console.log("CITY: " + i);
+
+			// Init values for edge iteration
+			var currentShortestDistance = Number.MAX_VALUE;
+			var currentShortestEdge = 0;
+			for(j = 0; j < edges.length; j++) {
+			//	console.log("EDGE: " + j);
+				var currentDistance = pointToLineDistance(coordinates[i], edges[j]);
+				if(currentDistance < currentShortestDistance) {
+					currentShortestEdge = j;
+					currentShortestDistance = currentDistance;
+				}
+			}
+
+			if(currentShortestDistance < shortest.distance) {
+				shortest.city = i;
+				shortest.edge = currentShortestEdge;
+				shortest.distance = currentShortestDistance;
+			console.log("Current shortest city: " + coordinates[shortest.city].num);
+			console.log("Current shortest edge: " + shortest.edge);
+			console.log("Current shortest distance: " + shortest.distance);
+			}
+		}
+
+		// Inserting edge
+		var toInsert = coordinates.splice(shortest.city, 1);
+		path.splice(shortest.edge, 0, toInsert[0]);
+		edges[shortest.edge] = new Line(path[shortest.edge], path[shortest.edge + 1]);
+		edges.splice(shortest.edge + 1, 0, new Line(path[shortest.edge + 1], path[shortest.edge + 2]));
+	}
+
+	displayResults(path, null, null, null, coordinates);
 
 	return path;
 }
 
-// Displays results on an HTML5 canvas
-function displayResults(path, distance, time, averageArray) {
+function pointToLineDistance(point, line) {
+	var abs = Math.abs(line.a * point.x + line.b * point.y + line.c);
+	var sqrt = Math.sqrt(Math.pow(line.a, 2) + Math.pow(line.b, 2));
+
+	return abs / sqrt;
+}
+
+function lineSegmentDistance(point, end1, end2) {
 	
+}
+
+// TODO WRITE MY OWN FUNCTION
+function sqr(x) { return x * x }
+function dist2(v, w) { return sqr(v.x - w.x) + sqr(v.y - w.y) }
+function distToSegmentSquared(p, v, w) {
+	  var l2 = dist2(v, w);
+	    if (l2 == 0) return dist2(p, v);
+		  var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+		    if (t < 0) return dist2(p, v);
+			  if (t > 1) return dist2(p, w);
+			    return dist2(p, { x: v.x + t * (w.x - v.x),
+					                    y: v.y + t * (w.y - v.y) });
+}
+function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
+
+// Displays results on an HTML5 canvas
+function displayResults(path, distance, time, averageArray, allCoords) {
 	var i;
 	var textOffset = 3;
 	var pointSize = 2;
@@ -128,18 +205,24 @@ function displayResults(path, distance, time, averageArray) {
 		var y = point.y;
 
 		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
-		ctx.fillText(parseInt(i) + 1, x + pointSize, y + pointSize);
+		ctx.fillText(point.num, x + pointSize, y + pointSize);
 	}
+	// TODO REMOVE
+	for(i = 0; i < allCoords.length; i++) {
+		var point = allCoords[i];
+		var x = point.x;
+		//var y = (canvas.height / canvasScale) - point.y;
+		var y = point.y;
+
+		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
+		ctx.fillText(point.num, x + pointSize, y + pointSize);
+	}
+	// TODO REMOVE END
 
 	// Draw lines
 	ctx.beginPath();
 	ctx.strokeStyle="red";
-	/*ctx.moveTo(coordinates[0].x, coordinates[0].y);
-	for(i = 1; i < coordinates.length; i++) {
-		ctx.lineTo(coordinates[i].x, coordinates[i].y);
-		ctx.stroke();
-	}*/
-	
+		
 	ctx.moveTo(path[0].x, path[0].y);
 	for(i = 1; i < path.length; i++) {
 		ctx.lineTo(path[i].x, path[i].y);
@@ -173,3 +256,8 @@ function getDistance(perm) {
 	}
 	return totalDistance;
 }
+
+	function sleep(delay) {
+		    var start = new Date().getTime();
+			    while (new Date().getTime() < start + delay);
+				  }
