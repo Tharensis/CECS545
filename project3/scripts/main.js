@@ -1,6 +1,7 @@
 // Global variables
 var xCoords = [];
 var yCoords = [];
+var runTimes = [];
 
 // BEGIN OBJECT DEFINITIONS 
 
@@ -12,6 +13,7 @@ function City(x, y, num) {
 
 
 // In the form of ax + by + c = 0
+// Not actually needed anymore, but too lazy to change code
 function Line(city1, city2) {
 
 	this.a = (city2.y - city1.y)/(city2.x - city1.x);
@@ -69,13 +71,13 @@ function parseData(fileData) {
 	}
 
 	var startTime = window.performance.now();
+
 	var path = findPath(coordinates);
+
 	var endTime = window.performance.now();
+	var distance = getDistance(path.path);
 
-	//displayResults(path, null, null, null);
-
-	//xCoords.length = 0;
-	//yCoords.length = 0;
+	displayResults(path.path, distance, endTime - startTime, path.added);
 }
 
 function findPath(coordinates) {
@@ -84,6 +86,8 @@ function findPath(coordinates) {
 	var path = [];
 	// Contains the equations of the lines between city path[i] and city path[i + 1]
 	var edges = [];
+	// Contains the cities added (in order)
+	var added = [];
 	
 
 	var max = coordinates.length;
@@ -96,18 +100,14 @@ function findPath(coordinates) {
 	// First two points are chosen randomly as there are no edges to consider
 	for(i = 0; i < 2; i++) {
 		path.push(coordinates.splice(Math.floor(Math.random() * coordinates.length), 1)[0]);
+		added.push(path[i].num);
 	}
 	path.push(JSON.parse(JSON.stringify(path[0])));
 	
-	//for(i = 0; i < 2; i++) {
-	//	path.push(coordinates.splice(0, 1)[0]);
-	//}
-
 	// Gets first edge hard-coded. Every other edge will be dynamic
 	edges.push(new Line(path[0], path[1]));
 
 	while(coordinates.length) {
-	//for(derp = 0; derp < 5; derp++) {
 		var shortest = {city: 0, 					// Index in coordinates array
 						edge: 0, 					// Index in the edges array
 						distance: Number.MAX_VALUE	// Distance between city and edge
@@ -115,15 +115,12 @@ function findPath(coordinates) {
 
 		// Finding next point to insert
 		for(i = 0; i < coordinates.length; i++) {
-			//console.log("CITY: " + i);
 
 			// Init values for edge iteration
 			var currentShortestDistance = Number.MAX_VALUE;
 			var currentShortestEdge = 0;
-			for(j = 0; j < edges.length; j++) {
-			//	console.log("EDGE: " + j);
-				//var currentDistance = pointToLineDistance(coordinates[i], edges[j]);
-				var currentDistance = distToSegment(coordinates[i], path[j], path[j+1]);
+			for(j = 0; j < path.length - 1; j++) {
+				var currentDistance = lineSegmentDistance(coordinates[i], path[j], path[j+1]);
 				if(currentDistance < currentShortestDistance) {
 					currentShortestEdge = j;
 					currentShortestDistance = currentDistance;
@@ -134,52 +131,41 @@ function findPath(coordinates) {
 				shortest.city = i;
 				shortest.edge = currentShortestEdge;
 				shortest.distance = currentShortestDistance;
-			console.log("Current shortest city: " + coordinates[shortest.city].num);
-			console.log("Current shortest edge: " + shortest.edge);
-			console.log("Current shortest distance: " + shortest.distance);
 			}
 		}
 
 		// Inserting edge
 		var toInsert = coordinates.splice(shortest.city, 1);
-		console.log(shortest.edge);
 		path.splice(shortest.edge + 1, 0, toInsert[0]);
 		edges[shortest.edge] = new Line(path[shortest.edge], path[shortest.edge + 1]);
 		edges.splice(shortest.edge + 1, 0, new Line(path[shortest.edge + 1], path[shortest.edge + 2]));
+
+		added.push(toInsert[toInsert.length - 1].num);
 	}
-
-	displayResults(path, null, null, null, coordinates);
-
-	return path;
+	return { path:path, added:added};
 }
 
-function pointToLineDistance(point, line) {
-	var abs = Math.abs(line.a * point.x + line.b * point.y + line.c);
-	var sqrt = Math.sqrt(Math.pow(line.a, 2) + Math.pow(line.b, 2));
-
-	return abs / sqrt;
-}
 
 function lineSegmentDistance(point, end1, end2) {
-	
-}
+	var l2 = Math.pow(end1.x - end2.x, 2) + Math.pow(end1.y - end2.y, 2);
+	if(l2 == 0) {
+		return Math.sqrt(Math.pow(point.x - end1.x, 2) + Math.pow(point.y - end1.y, 2));
+	}
+	var t0 = ((point.x - end1.x) * (end2.x - end1.x) + (point.y - end1.y) * (end2.y - end1.y)) / l2;
+	if(t0 < 0) {
+		return Math.sqrt(Math.pow(point.x - end1.x, 2) + Math.pow(point.y - end1.y, 2));
+	} else if (t0 >= 1) {
+		return Math.sqrt(Math.pow(point.x - end2.x, 2) + Math.pow(point.y - end2.y, 2));
+	} else {
+		var x = end1.x + t0 * (end2.x - end1.x);
+		var y = end1.y + t0 * (end2.y - end1.y);
 
-// TODO WRITE MY OWN FUNCTION
-function sqr(x) { return x * x }
-function dist2(v, w) { return sqr(v.x - w.x) + sqr(v.y - w.y) }
-function distToSegmentSquared(p, v, w) {
-	  var l2 = dist2(v, w);
-	    if (l2 == 0) return dist2(p, v);
-		  var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-		    if (t < 0) return dist2(p, v);
-			  if (t > 1) return dist2(p, w);
-			    return dist2(p, { x: v.x + t * (w.x - v.x),
-					                    y: v.y + t * (w.y - v.y) });
+		return Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+	}
 }
-function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
 
 // Displays results on an HTML5 canvas
-function displayResults(path, distance, time, averageArray, allCoords) {
+function displayResults(path, distance, time, added) {
 	var i;
 	var textOffset = 3;
 	var pointSize = 2;
@@ -210,18 +196,7 @@ function displayResults(path, distance, time, averageArray, allCoords) {
 		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
 		ctx.fillText(point.num, x + pointSize, y + pointSize);
 	}
-	// TODO REMOVE
-	for(i = 0; i < allCoords.length; i++) {
-		var point = allCoords[i];
-		var x = point.x;
-		//var y = (canvas.height / canvasScale) - point.y;
-		var y = point.y;
-
-		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
-		ctx.fillText(point.num, x + pointSize, y + pointSize);
-	}
-	// TODO REMOVE END
-
+	
 	// Draw lines
 	ctx.beginPath();
 	ctx.strokeStyle="red";
@@ -233,28 +208,45 @@ function displayResults(path, distance, time, averageArray, allCoords) {
 	ctx.stroke();
 
 	// Calculating average time
+	runTimes.push(time);
 	var average;
 	var sum = 0;
-	for(i in averageArray) {
-		sum += averageArray[i];
+	for(i = 0; i < runTimes.length; i++) {
+		sum += runTimes[i];
 	}
+	average = sum / runTimes.length;
 
-	ctx.fillText("Distance: " + distance, 5, 5);
-	ctx.fillText("Time: " + time + "ms", 5, 8);
-	ctx.fillText("Average: " + average + "ms", 5, 11);
+	ctx.fillStyle = "#000000";
+	ctx.fillText("Distance: " + distance, 125, 5);
+	ctx.fillText("Time: " + time + "ms", 125, 8);
+	ctx.fillText("Average: " + average + "ms", 125, 11);
 	ctx.scale(1 / canvasScale, 1 / canvasScale);
+
+	var pathString = "";
+
+	for(i = 0; i < path.length; i++) {
+		if(i != 0) {
+			pathString += ",";
+		}
+		pathString += path[i].num;
+		console.log(path[i]);
+		console.log(i);
+	}
+	
+	var addedArea = document.getElementById("addedList");
+	var pathArea = document.getElementById("path");
+	addedArea.innerHTML = "<b>Added in order:</b> " + added;
+	pathArea.innerHTML = "<b>Path:</b> " + pathString;
 }
 
-function getDistance(perm) {
+function getDistance(path) {
 	var totalDistance = 0;
 
-	var i = 0;
-	for(i = 0; i < perm.length - 1; i++) {
-		if(i != perm.length - 1) {
-			var city2 = perm[i + 1] - 1;
-			var city1 = perm[i] - 1;
-		}
-		var distance = Math.sqrt(Math.pow(xCoords[city2] - xCoords[city1], 2) + Math.pow(yCoords[city2] - yCoords[city1], 2));
+	for(i = 0; i < path.length - 1; i++) {
+		var point1 = path[i];
+		var point2 = path[i + 1];
+
+		var distance = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
 		totalDistance += distance;
 	}
 	return totalDistance;
