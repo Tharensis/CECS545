@@ -11,16 +11,6 @@ function City(x, y, num) {
 	this.num = num;
 }
 
-
-// In the form of ax + by + c = 0
-// Not actually needed anymore, but too lazy to change code
-function Line(city1, city2) {
-
-	this.a = (city2.y - city1.y)/(city2.x - city1.x);
-	this.b = -1;
-	this.c = city1.y - this.a * city1.x;
-}
-
 // END OBJECT DEFINITIONS
 
 // This function is called by the HTML file.
@@ -80,92 +70,8 @@ function parseData(fileData) {
 	displayResults(path.path, distance, endTime - startTime, path.added);
 }
 
-function findPath(coordinates) {
-	// Coordinates contains the list of cities not currently used yet
-	// Path contains the current path so far.
-	var path = [];
-	// Contains the equations of the lines between city path[i] and city path[i + 1]
-	var edges = [];
-	// Contains the cities added (in order)
-	var added = [];
-	
-
-	var max = coordinates.length;
-
-	if(coordinates.length <= 2) {
-		alert("Trivial result for number of cities between 0 and 2, inclusive.");
-		return;
-	}
-
-	// First two points are chosen randomly as there are no edges to consider
-	for(i = 0; i < 2; i++) {
-		path.push(coordinates.splice(Math.floor(Math.random() * coordinates.length), 1)[0]);
-		added.push(path[i].num);
-	}
-	path.push(JSON.parse(JSON.stringify(path[0])));
-	
-	// Gets first edge hard-coded. Every other edge will be dynamic
-	edges.push(new Line(path[0], path[1]));
-
-	while(coordinates.length) {
-		var shortest = {city: 0, 					// Index in coordinates array
-						edge: 0, 					// Index in the edges array
-						distance: Number.MAX_VALUE	// Distance between city and edge
-		};
-
-		// Finding next point to insert
-		for(i = 0; i < coordinates.length; i++) {
-
-			// Init values for edge iteration
-			var currentShortestDistance = Number.MAX_VALUE;
-			var currentShortestEdge = 0;
-			for(j = 0; j < path.length - 1; j++) {
-				var currentDistance = lineSegmentDistance(coordinates[i], path[j], path[j+1]);
-				if(currentDistance < currentShortestDistance) {
-					currentShortestEdge = j;
-					currentShortestDistance = currentDistance;
-				}
-			}
-
-			if(currentShortestDistance < shortest.distance) {
-				shortest.city = i;
-				shortest.edge = currentShortestEdge;
-				shortest.distance = currentShortestDistance;
-			}
-		}
-
-		// Inserting edge
-		var toInsert = coordinates.splice(shortest.city, 1);
-		path.splice(shortest.edge + 1, 0, toInsert[0]);
-		edges[shortest.edge] = new Line(path[shortest.edge], path[shortest.edge + 1]);
-		edges.splice(shortest.edge + 1, 0, new Line(path[shortest.edge + 1], path[shortest.edge + 2]));
-
-		added.push(toInsert[toInsert.length - 1].num);
-	}
-	return { path:path, added:added};
-}
-
-
-function lineSegmentDistance(point, end1, end2) {
-	var l2 = Math.pow(end1.x - end2.x, 2) + Math.pow(end1.y - end2.y, 2);
-	if(l2 == 0) {
-		return Math.sqrt(Math.pow(point.x - end1.x, 2) + Math.pow(point.y - end1.y, 2));
-	}
-	var t0 = ((point.x - end1.x) * (end2.x - end1.x) + (point.y - end1.y) * (end2.y - end1.y)) / l2;
-	if(t0 < 0) {
-		return Math.sqrt(Math.pow(point.x - end1.x, 2) + Math.pow(point.y - end1.y, 2));
-	} else if (t0 >= 1) {
-		return Math.sqrt(Math.pow(point.x - end2.x, 2) + Math.pow(point.y - end2.y, 2));
-	} else {
-		var x = end1.x + t0 * (end2.x - end1.x);
-		var y = end1.y + t0 * (end2.y - end1.y);
-
-		return Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-	}
-}
-
 // Displays results on an HTML5 canvas
-function displayResults(path, distance, time, added) {
+function displayResults(path, distance, time) {
 	var i;
 	var textOffset = 3;
 	var pointSize = 2;
@@ -231,9 +137,7 @@ function displayResults(path, distance, time, added) {
 		pathString += path[i].num;
 	}
 	
-	var addedArea = document.getElementById("addedList");
 	var pathArea = document.getElementById("path");
-	addedArea.innerHTML = "<b>Added in order:</b> " + added;
 	pathArea.innerHTML = "<b>Path:</b> " + pathString;
 }
 
@@ -250,7 +154,7 @@ function getDistance(path) {
 	return totalDistance;
 }
 
-	function sleep(delay) {
-		    var start = new Date().getTime();
-			    while (new Date().getTime() < start + delay);
-				  }
+function sleep(delay) {
+	var start = new Date().getTime();
+	while (new Date().getTime() < start + delay);
+}
