@@ -2,6 +2,7 @@
 var xCoords = [];
 var yCoords = [];
 var runTimes = [];
+var population = [];	// Array of all Path objects in a population
 
 // BEGIN OBJECT DEFINITIONS 
 
@@ -9,6 +10,11 @@ function City(x, y, num) {
 	this.x = parseFloat(x);
 	this.y = parseFloat(y);
 	this.num = num;
+}
+
+function Path(pathArray) {
+	this.path = JSON.parse(JSON.stringify(pathArray));	// Deep copies path into Path object
+	this.fitness = getDistance(pathArray);
 }
 
 // END OBJECT DEFINITIONS
@@ -34,8 +40,8 @@ function readFile(filePath) {
 }
 
 function parseData(fileData) {
-	var coordinates = [];
-	coordinates.length = 0;
+	var cityList = [];	// Contains the initial list of cities
+	cityList.length = 0;
 
 	var splitFile = fileData.split("\n");
 
@@ -52,7 +58,7 @@ function parseData(fileData) {
 			}
 		}
 		var splitLine = splitFile[i].split(" ");
-		coordinates.push(new City(splitLine[1], splitLine[2], splitLine[0]));
+		cityList.push(new City(splitLine[1], splitLine[2], splitLine[0]));
 	}
 
 	if(!bool_coordIndex) {
@@ -62,16 +68,191 @@ function parseData(fileData) {
 
 	var startTime = window.performance.now();
 
-	var path = findPath(coordinates);
+	//var path = findPath(coordinates);
+	population = generatePopulation(cityList);
+	findPath(population);
 
 	var endTime = window.performance.now();
-	var distance = getDistance(path.path);
 
-	displayResults(path.path, distance, endTime - startTime, path.added);
+	//displayResults(path.path, distance, endTime - startTime, path.added);
+}
+
+function findPath(population) {
+	//displayResults(population[0].path, population[0].fitness, null);
+
+	bestToFront(population);
+	for(var i = 0; i < 1000; i++) {
+		console.log(averageFitness(population));
+		population = evolve(population);
+		displayResults(population[0].path, population[0].fitness, null);
+	}
+}
+
+// Moves the best path to the front of the population
+function bestToFront(population) {
+	var bestIndex = 0;
+	var bestFitness = Number.MAX_VALUE;
+	for(var i = 0; i < population.length; i++) {
+		if(population[i].fitness < bestFitness) {
+			bestIndex = i;
+			bestFitness = population[i].fitness;
+		}
+	}
+	var newBest = population.splice(bestIndex, 1);
+	population.unshift(newBest[0]);
+	return population;
+}
+
+// Called to produce new population from parents and children
+function evolve(population) {
+	var newPop = [];
+	var parentPopulation = [];
+
+	// Select two parents by grabbing a random 20% of the population and grabbing the fittest
+	// Note: Best member is always added to the new population, so we don't lose it.
+	newPop.push(population[0]);
+	//console.log(population[0].fitness);
+	for(var i = 1; i < population.length; i++) {
+		for(var j = 0; j < population.length; j++) {
+			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
+		}
+		bestToFront(parentPopulation);
+		var parent1 = parentPopulation[0];
+		parentPopulation.length = 0;
+		
+		for(var j = 0; j < population.length; j++) {
+			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
+		}
+		bestToFront(parentPopulation);
+		var parent2 = parentPopulation[0];
+		parentPopulation.length = 0;
+
+		//var parent1 = population[Math.floor(Math.random() * population.length)];
+		//var parent2 = population[Math.floor(Math.random() * population.length)];
+
+		var child = crossover1(parent1, parent2);
+		
+		newPop.push(child);
+	}
+
+	// Mutate all but the first path
+	for(var i = 1; i < population.length; i++) {
+	//	DEBUG_PrintPath(population[i].path);
+		population[i] = mutate2(population[i]);
+	//	DEBUG_PrintPath(population[i].path);
+	}
+
+	// Moves best member of population to front.
+	bestToFront(newPop);
+	//console.log(population[0].fitness);
+	//console.log(population.length);
+	return newPop;
+}
+
+// Applies crossover function to two parents and producing one child
+function crossover1(parent1, parent2) {
+
+	var childPath = [];
+
+	// Select random interval to cross over and make sure that start < end
+	var startIndex = Math.floor(Math.random() * parent1.path.length);
+	var endIndex = Math.floor(Math.random() * parent1.path.length);
+	if(startIndex > endIndex) {
+		var temp = startIndex;
+		startIndex = endIndex;
+		endIndex = temp;
+	}
+
+	// Copy crossover interval from parent 1 into child
+	for(var i = startIndex; i <= endIndex; i++) {
+		childPath[i] = parent1.path[i];
+	}
+
+	// If child doesn't have parent 2's city. Add it.
+	for(var i = 0; i < parent2.path.length; i++) {
+		// Does child contain parent city? If so, continue;
+		var contains = false;
+		for(var j = 0; j < parent2.path.length; j++) {
+			if(childPath[j] != undefined && childPath[j].num == parent2.path[i].num) {
+				contains = true;
+				break;
+			}
+		}
+		if(contains) {
+			continue;
+		}
+
+		// Looping through child to find spare location
+		for(var j = 0; j < parent2.path.length; j++) {
+			if(childPath[j] == null) {
+				childPath[j] = parent2.path[i];
+				break;
+			}
+		}
+	}
+
+	return new Path(childPath);
+}
+
+function mutate(path) {
+	var index1 = Math.floor(Math.random() * path.path.length);
+	var index2 = Math.floor(Math.random() * path.path.length);
+
+	var temp;
+
+	//DEBUG_PrintPath(path.path);
+
+	temp = path.path[index1];
+	path.path[index1] = path.path[index2];
+	path.path[index2] = temp;
+
+	//DEBUG_PrintPath(path.path);
+
+	return path;
+}
+
+function mutate2(path) {
+	var i = Math.floor(Math.random() * path.path.length);
+	var j = Math.floor(Math.random() * path.path.length);
+	var temp;
+
+	if(i > j) {
+		temp = i;
+		i = j;
+		j = temp;
+	}
+
+	while(i < j) {
+		temp = path.path[i];
+		path.path[i] = path.path[j];
+		path.path[j] = temp;
+		i++;
+		j--;
+	}
+	return path;
+}
+
+function generatePopulation(cities) {
+	var workingSet = [];
+	var population = [];
+
+	var max = cities.length;
+	for(var i = 0; i < max; i++) {
+		while(cities.length) {
+			var tempCity = cities.splice(Math.floor(Math.random() * cities.length), 1);
+			workingSet.push(tempCity[0]);
+		}
+		population.push(new Path(workingSet));
+		cities = JSON.parse(JSON.stringify(workingSet));
+		workingSet.length = 0;
+	}
+	
+	return population;
 }
 
 // Displays results on an HTML5 canvas
 function displayResults(path, distance, time) {
+	//sleep(1000);
 	var i;
 	var textOffset = 3;
 	var pointSize = 2;
@@ -111,6 +292,7 @@ function displayResults(path, distance, time) {
 	for(i = 1; i < path.length; i++) {
 		ctx.lineTo(path[i].x, path[i].y);
 	}
+	ctx.lineTo(path[0].x, path[0].y);
 	ctx.stroke();
 
 	// Calculating average time
@@ -145,13 +327,39 @@ function getDistance(path) {
 	var totalDistance = 0;
 
 	for(i = 0; i < path.length - 1; i++) {
-		var point1 = path[i];
-		var point2 = path[i + 1];
+		if(i != path.length - 2) {
+			var point1 = path[i];
+			var point2 = path[i + 1];
+		} else {
+			var point1 = path[i + 1];
+			var point2 = path[0];
+		}
 
 		var distance = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
 		totalDistance += distance;
 	}
 	return totalDistance;
+}
+
+function averageFitness(population) {
+	var totalFitness = 0;
+	for(var i = 0; i < population.length; i++) {
+		totalFitness += population[i].fitness;
+	}
+	return totalFitness / population.length;
+}
+
+// DEBUG FUNCTION ONLY. Outputs the city number array for given path
+function DEBUG_PrintPath(path) {
+	var newArray = [];
+	for(var i = 0; i < path.length; i++) {
+		if(path[i] != undefined) {
+			newArray.push(path[i].num);
+		} else {
+			newArray.push(-1);
+		}
+	}
+	console.log(newArray);
 }
 
 function sleep(delay) {
