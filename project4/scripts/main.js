@@ -3,6 +3,7 @@ var xCoords = [];
 var yCoords = [];
 var runTimes = [];
 var population = [];	// Array of all Path objects in a population
+var mutationRate = 0.015
 
 // BEGIN OBJECT DEFINITIONS 
 
@@ -78,10 +79,8 @@ function parseData(fileData) {
 }
 
 function findPath(population) {
-	//displayResults(population[0].path, population[0].fitness, null);
-
 	bestToFront(population);
-	for(var i = 0; i < 1000; i++) {
+	for(var i = 0; i < 2000; i++) {
 		console.log(averageFitness(population));
 		population = evolve(population);
 		displayResults(population[0].path, population[0].fitness, null);
@@ -108,38 +107,37 @@ function evolve(population) {
 	var newPop = [];
 	var parentPopulation = [];
 
-	// Select two parents by grabbing a random 20% of the population and grabbing the fittest
+	// Selecting two parents by tournament selection. Random 10% of the population.
 	// Note: Best member is always added to the new population, so we don't lose it.
 	newPop.push(population[0]);
 	//console.log(population[0].fitness);
 	for(var i = 1; i < population.length; i++) {
-		for(var j = 0; j < population.length; j++) {
+		for(var j = 0; j < population.length / 10; j++) {
 			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
 		}
 		bestToFront(parentPopulation);
 		var parent1 = parentPopulation[0];
 		parentPopulation.length = 0;
 		
-		for(var j = 0; j < population.length; j++) {
+		for(var j = 0; j < population.length / 10; j++) {
 			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
 		}
 		bestToFront(parentPopulation);
 		var parent2 = parentPopulation[0];
 		parentPopulation.length = 0;
 
-		//var parent1 = population[Math.floor(Math.random() * population.length)];
-		//var parent2 = population[Math.floor(Math.random() * population.length)];
-
 		var child = crossover1(parent1, parent2);
 		
 		newPop.push(child);
 	}
+	// Sort the array by fitness. Fitness = path length, so less fit = better.
 
-	// Mutate all but the first path
-	for(var i = 1; i < population.length; i++) {
-	//	DEBUG_PrintPath(population[i].path);
-		population[i] = mutate2(population[i]);
-	//	DEBUG_PrintPath(population[i].path);
+
+	// Mutate any member of population based on the mutation rate
+	for(var i = 0; i < population.length; i++) {
+		if(Math.random() < mutationRate) {
+			population[i] = mutate2(population[i]);
+		}
 	}
 
 	// Moves best member of population to front.
