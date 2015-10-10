@@ -2,8 +2,10 @@
 var xCoords = [];
 var yCoords = [];
 var runTimes = [];
-var population = [];	// Array of all Path objects in a population
-var mutationRate = 0.015
+var population = [];		// Array of all Path objects in a population
+var mutationRate = 0.015;	// Default mutation rate
+var numGenerations = 1000;	// Default number of generations
+var tournamentSize = 0.10;  // Determines percentage of population used to determine parents
 
 // BEGIN OBJECT DEFINITIONS 
 
@@ -22,7 +24,39 @@ function Path(pathArray) {
 
 // This function is called by the HTML file.
 function main(filePath) {
-	readFile(filePath);
+
+	// Immediately check if textbox has values and radio buttons selected
+	var radios = document.getElementsByClassName("required");
+	var numChecked = 0;
+	for(var i = 0; i < radios.length; i++) {
+		if(radios[i].checked) {
+			numChecked++;
+		}
+	}
+
+	// Updating variables
+	var valuePlaceholder;
+	if(valuePlaceholder = document.getElementById("generations").value) {
+		numGenerations = valuePlaceholder;
+	} else {
+		numGenerations = 1000;
+	}
+	if(valuePlaceholder = document.getElementById("mutationRate").value) {
+		mutationRate = valuePlaceholder;
+	} else {
+		mutationRate = 0.015;
+	}
+	if(valuePlaceholder = document.getElementById("tournamentSize").value) {
+		tournamentSize = valuePlaceholder;
+	} else {
+		tournamentSize = 0.10;
+	}
+
+	if(numChecked == 2) {
+		readFile(filePath);
+	} else {
+		alert("Invalid variables! Select crossover function, mutation function, and generations");
+	}
 	// Sent to read the file
 }
 
@@ -79,12 +113,16 @@ function parseData(fileData) {
 }
 
 function findPath(population) {
+	var averageArray = [];
+	var bestArray = [];
 	bestToFront(population);
-	for(var i = 0; i < 100000; i++) {
-		//console.log(averageFitness(population));
+	for(var i = 1; i <= numGenerations; i++) {
 		population = evolve(population);
 		displayResults(population[0].path, population[0].fitness, null);
+		averageArray.push({x: i, y: averageFitness(population)});
+		bestArray.push({x: i, y: population[0].fitness});
 	}
+	displayLineChart(averageArray, bestArray);
 }
 
 // Moves the best path to the front of the population
@@ -111,7 +149,6 @@ function evolve(population) {
 	// Execute this by population.length
 	// Note: Best member is always added to the new population, so we don't lose it.
 	newPop.push(population[0]);
-	//console.log(population[0].fitness);
 	for(var i = 1; i < population.length; i++) {
 		for(var j = 0; j < population.length / 10; j++) {
 			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
@@ -120,14 +157,18 @@ function evolve(population) {
 		var parent1 = parentPopulation[0];
 		parentPopulation.length = 0;
 		
-		for(var j = 0; j < population.length / 10; j++) {
+		for(var j = 0; j < population.length * tournamentSize; j++) {
 			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
 		}
 		bestToFront(parentPopulation);
 		var parent2 = parentPopulation[0];
 		parentPopulation.length = 0;
 
-		var child = crossover1(parent1, parent2);
+		if(document.getElementById("cross1").checked) {
+			var child = crossover1(parent1, parent2);
+		} else {
+			var child = crossover2(parent1, parent2);
+		}
 		
 		newPop.push(child);
 	}
@@ -137,14 +178,16 @@ function evolve(population) {
 	// Mutate any member of population based on the mutation rate
 	for(var i = 0; i < population.length; i++) {
 		if(Math.random() < mutationRate) {
-			population[i] = mutate2(population[i]);
+			if(document.getElementById("mutate1").checked) {
+				population[i] = mutate1(population[i]);
+			} else {
+				population[i] = mutate2(population[i]);
+			}
 		}
 	}
 
 	// Moves best member of population to front.
 	bestToFront(newPop);
-	//console.log(population[0].fitness);
-	//console.log(population.length);
 	return newPop;
 }
 
@@ -193,7 +236,7 @@ function crossover1(parent1, parent2) {
 	return new Path(childPath);
 }
 
-function mutate(path) {
+function mutate1(path) {
 	var index1 = Math.floor(Math.random() * path.path.length);
 	var index2 = Math.floor(Math.random() * path.path.length);
 
@@ -319,6 +362,41 @@ function displayResults(path, distance, time) {
 	
 	var pathArea = document.getElementById("path");
 	pathArea.innerHTML = "<b>Path:</b> " + pathString;
+}
+
+function displayLineChart(average, best) {
+	var chart = new CanvasJS.Chart("lineChartContainer", {
+		zoomEnabled: true,
+		animationEnabled: true,
+		title:{
+			text: "Average distance and Best distance"
+		},
+		axisX: {
+			labelAngle: -30
+		},
+		axisY: {
+			includeZero: true
+		},
+		data: [
+		{
+			type: "line",
+			showInLegend: true,
+			lineThickness: 2,
+			name: "Best Distance",
+			dataPoints: best
+		},
+		{
+			type: "line",
+			showInLegend: true,
+			lineThickness: 2,
+			name: "Average Distance",
+			dataPoints: average
+		}
+		]
+	});
+	chart.render();
+	best.length = 0;
+	average.length = 0;
 }
 
 function getDistance(path) {

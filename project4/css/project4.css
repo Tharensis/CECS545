@@ -2,7 +2,7 @@
 	text-align: center;
 }
 
-#selection {
+#variables {
 	margin: 5px;
 	text-align: center;
 }
@@ -11,8 +11,14 @@
 	text-align: center;
 	margin-left: auto;
 	margin-right: auto;
-	margin-top: 50px;
+	margin-top: 30px;
 	width: 75%;
+}
+
+#lineChartContainer {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 table {

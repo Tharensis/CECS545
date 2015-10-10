@@ -2,6 +2,7 @@
 	<head>
 		<title>Project 4</title>
 		<script src="scripts/main.js"></script>
+		<script src="scripts/canvasjs.min.js"></script>
 		<link rel="stylesheet" type="text/css" href="css/project4.css">
 	</head>
 	<body>
@@ -9,11 +10,43 @@
 			<input type="file" id="files" name="files[]" accept=".tsp" />
 			<button id ="runButton" onclick='main(document.getElementById("files"))' >Calculate</button>
 		</div>
+		<div id="variables">
+			<div id="crossoverValues"><strong>Crossover Choice</strong>
+				<div>
+					<label>
+						<input type="radio" name="crossover" class="required" id="cross1" checked>Function 1</input>
+					</label>
+					<label>
+						<input type="radio" name="crossover" class="required" id="cross2">Function 2</input>
+					</label>
+				</div>
+			</div>
+			<div id="mutationValues"><strong>Mutation Choice</strong>
+				<div>
+					<label>
+						<input type="radio" name="mutation" class="required" id="mutate1" checked>Function 1</input>
+					</label>
+					<label>
+						<input type="radio" name="mutation" class="required" id="mutate2">Function 2</input>
+					</label>
+				</div>
+			</div>
+			<div id="generationValues">
+				<input type="text" id="generations" placeholder=1000>Generations</input>
+			</div>
+			<div id="mutationRateValues">
+				<input type="text" id="mutationRate" placeholder=0.015>Mutation Rate</input>
+			</div>
+			<div id="tournamentSizeValues">
+				<input type="text" id="tournamentSize" placeholder=0.10>Tournament Size</input>
+			</div>
+		</div>
 		<div id="results">
 			<div id="path">Path...</div>
 			<canvas id="resultCanvas" width="800" height="400" style="border:1px solid #000000;">
 				Your browser is unable to display an HTML5 Canvas. Please upgrade to a newer browser
 			</canvas>
+			<div id="lineChartContainer" style="height: 400; width: 800px;"></div> 
 		</div>
 		<noscript>
 			Please enable JavaScript to view the page.
