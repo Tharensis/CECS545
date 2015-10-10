@@ -80,8 +80,8 @@ function parseData(fileData) {
 
 function findPath(population) {
 	bestToFront(population);
-	for(var i = 0; i < 2000; i++) {
-		console.log(averageFitness(population));
+	for(var i = 0; i < 100000; i++) {
+		//console.log(averageFitness(population));
 		population = evolve(population);
 		displayResults(population[0].path, population[0].fitness, null);
 	}
@@ -108,6 +108,7 @@ function evolve(population) {
 	var parentPopulation = [];
 
 	// Selecting two parents by tournament selection. Random 10% of the population.
+	// Execute this by population.length
 	// Note: Best member is always added to the new population, so we don't lose it.
 	newPop.push(population[0]);
 	//console.log(population[0].fitness);
@@ -250,7 +251,6 @@ function generatePopulation(cities) {
 
 // Displays results on an HTML5 canvas
 function displayResults(path, distance, time) {
-	//sleep(1000);
 	var i;
 	var textOffset = 3;
 	var pointSize = 2;
