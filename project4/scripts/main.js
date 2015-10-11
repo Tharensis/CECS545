@@ -7,6 +7,8 @@ var mutationRate = 0.015;	// Default mutation rate
 var numGenerations = 1000;	// Default number of generations
 var tournamentSize = 0.10;  // Determines percentage of population used to determine parents
 
+var population = [];
+
 // BEGIN OBJECT DEFINITIONS 
 
 function City(x, y, num) {
@@ -110,6 +112,7 @@ function parseData(fileData) {
 }
 
 function findPath(population) {
+
 	var averageArray = [];
 	var bestArray = [];
 	averageArray.length = 0;
@@ -120,16 +123,8 @@ function findPath(population) {
 		averageArray.push({x: i, y: averageFitness(population)});
 		bestArray.push({x: i, y: population[0].fitness});
 	}
-	displayResults(population[0].path, population[0].fitness, null);
-	//DEBUG_PrintPath(population[0].path);
-	//console.log(getDistance(population[0].path));
 	displayLineChart(averageArray, bestArray);
-
-	// Loop to compare fitness and calculated fitness
-	for(var i = 0; i < population.length; i++) {
-		//console.log(population[i].fitness);
-		//console.log(getDistance(population[i].path));
-	}
+	displayResults(population[0].path, population[0].fitness, null);
 }
 
 // Moves the best path to the front of the population
@@ -174,9 +169,6 @@ function evolve(population) {
 		bestToFront(parentPopulation);
 		var parent2 = parentPopulation[0];
 		parentPopulation.length = 0;
-
-		//var parent1 = population[Math.floor(Math.random() * population.length)];
-		//var parent2 = population[Math.floor(Math.random() * population.length)];
 
 		if(document.getElementById("cross1").checked) {
 			var child = crossover1(parent1, parent2);
@@ -390,6 +382,7 @@ function displayResults(path, distance, time) {
 	// Draw lines
 	ctx.beginPath();
 	ctx.strokeStyle="red";
+	ctx.lineWidth = 1;
 		
 	ctx.moveTo(path[0].x, path[0].y);
 	for(i = 1; i < path.length; i++) {
