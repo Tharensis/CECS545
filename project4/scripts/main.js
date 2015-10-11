@@ -251,6 +251,45 @@ function crossover1(parent1, parent2) {
 	return new Path(childPath);
 }
 
+// Crossover 2 moves random city locations from parent 1 to offspring, then fills in the rest from parent 2 in order
+function crossover2(parent1, parent2) {
+	var childPath = [];
+
+	// Copy crossover interval from parent 1 into child
+	for(var i = 0; i <= parent1.path.length; i++) {
+		if(Math.random() < 0.4) {
+			childPath[i] = parent1.path[i];
+		}
+	}
+
+	// If child doesn't have parent 2's city. Add it.
+	for(var i = 0; i < parent2.path.length; i++) {
+		// Does child contain parent city? If so, continue;
+		var contains = false;
+		for(var j = 0; j < parent2.path.length; j++) {
+			if(childPath[j] != undefined && childPath[j].num == parent2.path[i].num) {
+				contains = true;
+				break;
+			}
+		}
+		if(contains) {
+			continue;
+		}
+
+		// Looping through child to find spare location
+		for(var j = 0; j < parent2.path.length; j++) {
+			if(childPath[j] == null) {
+				childPath[j] = parent2.path[i];
+				break;
+			}
+		}
+	}
+	
+	childPath.length = parent1.path.length; // Not sure why I need this currently, but oh well.
+
+	return new Path(childPath);
+}
+
 function mutate1(oldPath) {
 
 	var path = JSON.parse(JSON.stringify(oldPath));
@@ -455,12 +494,12 @@ function displayLineChart(average, best) {
 function getDistance(path) {
 	var totalDistance = 0;
 
-	for(i = 0; i < path.length - 1; i++) {
-		if(i != path.length - 2) {
+	for(i = 0; i < path.length; i++) {
+		if(i != path.length - 1) {
 			var point1 = path[i];
 			var point2 = path[i + 1];
 		} else {
-			var point1 = path[i + 1];
+			var point1 = path[i];
 			var point2 = path[0];
 		}
 
