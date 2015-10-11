@@ -17,7 +17,7 @@ function City(x, y, num) {
 
 function Path(pathArray) {
 	this.path = JSON.parse(JSON.stringify(pathArray));	// Deep copies path into Path object
-	this.fitness = getDistance(pathArray);
+	this.fitness = getDistance(this.path);
 }
 
 // END OBJECT DEFINITIONS
@@ -103,26 +103,34 @@ function parseData(fileData) {
 
 	var startTime = window.performance.now();
 
-	//var path = findPath(coordinates);
 	population = generatePopulation(cityList);
 	findPath(population);
 
 	var endTime = window.performance.now();
-
-	//displayResults(path.path, distance, endTime - startTime, path.added);
 }
 
 function findPath(population) {
 	var averageArray = [];
 	var bestArray = [];
+	averageArray.length = 0;
+	bestArray.length = 0;
 	bestToFront(population);
 	for(var i = 1; i <= numGenerations; i++) {
 		population = evolve(population);
-		displayResults(population[0].path, population[0].fitness, null);
 		averageArray.push({x: i, y: averageFitness(population)});
 		bestArray.push({x: i, y: population[0].fitness});
 	}
+	displayResults(population[0].path, population[0].fitness, null);
+	//DEBUG_PrintPath(population[0].path);
+	console.log(getDistance(population[0].path));
 	displayLineChart(averageArray, bestArray);
+
+	// Loop to compare fitness and calculated fitness
+	for(var i = 0; i < population.length; i++) {
+		//console.log(population[i].fitness);
+		//console.log(getDistance(population[i].path));
+	}
+	console.log(population);
 }
 
 // Moves the best path to the front of the population
@@ -137,6 +145,10 @@ function bestToFront(population) {
 	}
 	var newBest = population.splice(bestIndex, 1);
 	population.unshift(newBest[0]);
+	//if(population[0].fitness != getDistance(population[0].path)) {
+	//	console.log("NOT EQUAL");
+	//	console.log(population[0].fitness + " " + getDistance(population[0].path));
+	//}
 	return population;
 }
 
@@ -150,7 +162,7 @@ function evolve(population) {
 	// Note: Best member is always added to the new population, so we don't lose it.
 	newPop.push(population[0]);
 	for(var i = 1; i < population.length; i++) {
-		for(var j = 0; j < population.length / 10; j++) {
+		for(var j = 0; j < population.length * tournamentSize; j++) {
 			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
 		}
 		bestToFront(parentPopulation);
@@ -172,16 +184,22 @@ function evolve(population) {
 		
 		newPop.push(child);
 	}
-	// Sort the array by fitness. Fitness = path length, so less fit = better.
-
 
 	// Mutate any member of population based on the mutation rate
 	for(var i = 0; i < population.length; i++) {
 		if(Math.random() < mutationRate) {
 			if(document.getElementById("mutate1").checked) {
+				//DEBUG_PrintPath(population[i].path);
+				console.log(population[i].fitness);
 				population[i] = mutate1(population[i]);
+				console.log(population[i].fitness);
+				//DEBUG_PrintPath(population[i].path);
 			} else {
+				//DEBUG_PrintPath(population[i].path);
+				console.log(population[i].fitness);
 				population[i] = mutate2(population[i]);
+				console.log(population[i].fitness);
+				//DEBUG_PrintPath(population[i].path);
 			}
 		}
 	}
@@ -236,27 +254,38 @@ function crossover1(parent1, parent2) {
 	return new Path(childPath);
 }
 
-function mutate1(path) {
+function mutate1(oldPath) {
+
+	var path = JSON.parse(JSON.stringify(oldPath));
+
 	var index1 = Math.floor(Math.random() * path.path.length);
 	var index2 = Math.floor(Math.random() * path.path.length);
 
 	var temp;
 
 	//DEBUG_PrintPath(path.path);
+	
+	//console.log(path.path[index1].num + " " + path.path[index2].num);
 
 	temp = path.path[index1];
 	path.path[index1] = path.path[index2];
 	path.path[index2] = temp;
 
+	//console.log(path.path[index1].num + " " + path.path[index2].num);
+
 	//DEBUG_PrintPath(path.path);
 
-	return path;
+	return new Path(path.path);
 }
 
-function mutate2(path) {
+function mutate2(oldPath) {
+
+	var path = JSON.parse(JSON.stringify(oldPath));
+
 	var i = Math.floor(Math.random() * path.path.length);
 	var j = Math.floor(Math.random() * path.path.length);
 	var temp;
+
 
 	if(i > j) {
 		temp = i;
@@ -271,6 +300,10 @@ function mutate2(path) {
 		i++;
 		j--;
 	}
+	
+	path = new Path(path.path);
+
+
 	return path;
 }
 
@@ -395,8 +428,6 @@ function displayLineChart(average, best) {
 		]
 	});
 	chart.render();
-	best.length = 0;
-	average.length = 0;
 }
 
 function getDistance(path) {
