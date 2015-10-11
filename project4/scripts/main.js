@@ -122,7 +122,7 @@ function findPath(population) {
 	}
 	displayResults(population[0].path, population[0].fitness, null);
 	//DEBUG_PrintPath(population[0].path);
-	console.log(getDistance(population[0].path));
+	//console.log(getDistance(population[0].path));
 	displayLineChart(averageArray, bestArray);
 
 	// Loop to compare fitness and calculated fitness
@@ -130,7 +130,6 @@ function findPath(population) {
 		//console.log(population[i].fitness);
 		//console.log(getDistance(population[i].path));
 	}
-	console.log(population);
 }
 
 // Moves the best path to the front of the population
@@ -176,6 +175,9 @@ function evolve(population) {
 		var parent2 = parentPopulation[0];
 		parentPopulation.length = 0;
 
+		//var parent1 = population[Math.floor(Math.random() * population.length)];
+		//var parent2 = population[Math.floor(Math.random() * population.length)];
+
 		if(document.getElementById("cross1").checked) {
 			var child = crossover1(parent1, parent2);
 		} else {
@@ -190,21 +192,24 @@ function evolve(population) {
 		if(Math.random() < mutationRate) {
 			if(document.getElementById("mutate1").checked) {
 				//DEBUG_PrintPath(population[i].path);
-				console.log(population[i].fitness);
-				population[i] = mutate1(population[i]);
-				console.log(population[i].fitness);
+				//console.log(population[i].fitness);
+				newPop[i] = mutate1(newPop[i]);
+				//console.log(population[i].fitness);
 				//DEBUG_PrintPath(population[i].path);
 			} else {
 				//DEBUG_PrintPath(population[i].path);
-				console.log(population[i].fitness);
-				population[i] = mutate2(population[i]);
-				console.log(population[i].fitness);
+				//DEBUG_PrintFitnesses(population);
+				//console.log(population[i].fitness);
+				newPop[i] = mutate2(newPop[i]);
+				//console.log(population[i].fitness);
+				//DEBUG_PrintFitnesses(population);
 				//DEBUG_PrintPath(population[i].path);
 			}
 		}
 	}
 
 	// Moves best member of population to front.
+	//console.log(averageFitness(newPop));
 	bestToFront(newPop);
 	return newPop;
 }
@@ -257,6 +262,7 @@ function crossover1(parent1, parent2) {
 function mutate1(oldPath) {
 
 	var path = JSON.parse(JSON.stringify(oldPath));
+	//var path = oldPath;
 
 	var index1 = Math.floor(Math.random() * path.path.length);
 	var index2 = Math.floor(Math.random() * path.path.length);
@@ -276,6 +282,30 @@ function mutate1(oldPath) {
 	//DEBUG_PrintPath(path.path);
 
 	return new Path(path.path);
+
+
+	/*var path = JSON.parse(JSON.stringify(population[index]));
+
+	var index1 = Math.floor(Math.random() * path.path.length);
+	var index2 = Math.floor(Math.random() * path.path.length);
+
+	var temp;
+
+	//DEBUG_PrintPath(path.path);
+	
+	//console.log(path.path[index1].num + " " + path.path[index2].num);
+
+	temp = path.path[index1];
+	path.path[index1] = path.path[index2];
+	path.path[index2] = temp;
+
+	//console.log(path.path[index1].num + " " + path.path[index2].num);
+
+	//DEBUG_PrintPath(path.path);
+	
+	population[index] = JSON.parse(JSON.stringify(new Path(path)));
+
+	return population;*/
 }
 
 function mutate2(oldPath) {
@@ -302,7 +332,6 @@ function mutate2(oldPath) {
 	}
 	
 	path = new Path(path.path);
-
 
 	return path;
 }
@@ -449,10 +478,12 @@ function getDistance(path) {
 }
 
 function averageFitness(population) {
+	//DEBUG_PrintFitnesses(population);
 	var totalFitness = 0;
 	for(var i = 0; i < population.length; i++) {
 		totalFitness += population[i].fitness;
 	}
+	//console.log(totalFitness);
 	return totalFitness / population.length;
 }
 
@@ -465,6 +496,14 @@ function DEBUG_PrintPath(path) {
 		} else {
 			newArray.push(-1);
 		}
+	}
+	console.log(newArray);
+}
+
+function DEBUG_PrintFitnesses(population) {
+	var newArray = [];
+	for(var i = 0; i < population.length; i++) {
+		newArray.push(population[i].fitness);
 	}
 	console.log(newArray);
 }
