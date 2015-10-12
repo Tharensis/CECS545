@@ -41,9 +41,9 @@ function main(filePath) {
 	var valuePlaceholder;
 	if(valuePlaceholder = document.getElementById("generations").value) {
 		numGenerations = valuePlaceholder;
-		setGenerationsFlag = true;
+		numGenerationsFlag = true;
 	} else {
-		setGenerationsFlag = false;
+		numGenerationsFlag = false;
 	}
 	if(valuePlaceholder = document.getElementById("mutationRate").value) {
 		mutationRate = valuePlaceholder;
