@@ -4,7 +4,8 @@ var yCoords = [];
 var runTimes = [];
 var population = [];		// Array of all Path objects in a population
 var mutationRate = 0.015;	// Default mutation rate
-var numGenerations = 1000;	// Default number of generations
+var numGenerations = -1;	// Default number of generations
+var numGenerationsFlag = false;
 var tournamentSize = 0.10;  // Determines percentage of population used to determine parents
 
 var population = [];
@@ -40,8 +41,9 @@ function main(filePath) {
 	var valuePlaceholder;
 	if(valuePlaceholder = document.getElementById("generations").value) {
 		numGenerations = valuePlaceholder;
+		setGenerationsFlag = true;
 	} else {
-		numGenerations = 1000;
+		setGenerationsFlag = false;
 	}
 	if(valuePlaceholder = document.getElementById("mutationRate").value) {
 		mutationRate = valuePlaceholder;
@@ -106,25 +108,30 @@ function parseData(fileData) {
 	var startTime = window.performance.now();
 
 	population = generatePopulation(cityList);
-	findPath(population);
-
-	var endTime = window.performance.now();
+	findPath(population, startTime);
 }
 
-function findPath(population) {
+function findPath(population, startTime) {
 
 	var averageArray = [];
 	var bestArray = [];
 	averageArray.length = 0;
 	bestArray.length = 0;
 	bestToFront(population);
+	// Sets number of generations to 200 * the number of cities if not specified
+	if(!numGenerationsFlag) {
+		numGenerations = population.length * 200;
+	}
 	for(var i = 1; i <= numGenerations; i++) {
 		population = evolve(population);
 		averageArray.push({x: i, y: averageFitness(population)});
 		bestArray.push({x: i, y: population[0].fitness});
 	}
+
+	var endTime = window.performance.now();
+
 	displayLineChart(averageArray, bestArray);
-	displayResults(population[0].path, population[0].fitness, null);
+	displayResults(population[0].path, population[0].fitness, endTime - startTime);
 }
 
 // Moves the best path to the front of the population
@@ -183,25 +190,14 @@ function evolve(population) {
 	for(var i = 0; i < population.length; i++) {
 		if(Math.random() < mutationRate) {
 			if(document.getElementById("mutate1").checked) {
-				//DEBUG_PrintPath(population[i].path);
-				//console.log(population[i].fitness);
 				newPop[i] = mutate1(newPop[i]);
-				//console.log(population[i].fitness);
-				//DEBUG_PrintPath(population[i].path);
 			} else {
-				//DEBUG_PrintPath(population[i].path);
-				//DEBUG_PrintFitnesses(population);
-				//console.log(population[i].fitness);
 				newPop[i] = mutate2(newPop[i]);
-				//console.log(population[i].fitness);
-				//DEBUG_PrintFitnesses(population);
-				//DEBUG_PrintPath(population[i].path);
 			}
 		}
 	}
 
 	// Moves best member of population to front.
-	//console.log(averageFitness(newPop));
 	bestToFront(newPop);
 	return newPop;
 }
@@ -300,43 +296,11 @@ function mutate1(oldPath) {
 
 	var temp;
 
-	//DEBUG_PrintPath(path.path);
-	
-	//console.log(path.path[index1].num + " " + path.path[index2].num);
-
 	temp = path.path[index1];
 	path.path[index1] = path.path[index2];
 	path.path[index2] = temp;
-
-	//console.log(path.path[index1].num + " " + path.path[index2].num);
-
-	//DEBUG_PrintPath(path.path);
 
 	return new Path(path.path);
-
-
-	/*var path = JSON.parse(JSON.stringify(population[index]));
-
-	var index1 = Math.floor(Math.random() * path.path.length);
-	var index2 = Math.floor(Math.random() * path.path.length);
-
-	var temp;
-
-	//DEBUG_PrintPath(path.path);
-	
-	//console.log(path.path[index1].num + " " + path.path[index2].num);
-
-	temp = path.path[index1];
-	path.path[index1] = path.path[index2];
-	path.path[index2] = temp;
-
-	//console.log(path.path[index1].num + " " + path.path[index2].num);
-
-	//DEBUG_PrintPath(path.path);
-	
-	population[index] = JSON.parse(JSON.stringify(new Path(path)));
-
-	return population;*/
 }
 
 function mutate2(oldPath) {
@@ -441,8 +405,7 @@ function displayResults(path, distance, time) {
 
 	ctx.fillStyle = "#000000";
 	ctx.fillText("Distance: " + distance, 125, 5);
-	ctx.fillText("Time: " + time + "ms", 125, 8);
-	ctx.fillText("Average: " + average + "ms", 125, 11);
+	ctx.fillText("Time: " + time/1000 + "s", 125, 8);
 	ctx.scale(1 / canvasScale, 1 / canvasScale);
 
 	var pathString = "";
@@ -510,12 +473,10 @@ function getDistance(path) {
 }
 
 function averageFitness(population) {
-	//DEBUG_PrintFitnesses(population);
 	var totalFitness = 0;
 	for(var i = 0; i < population.length; i++) {
 		totalFitness += population[i].fitness;
 	}
-	//console.log(totalFitness);
 	return totalFitness / population.length;
 }
 
