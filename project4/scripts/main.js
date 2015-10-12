@@ -118,9 +118,9 @@ function findPath(population, startTime) {
 	averageArray.length = 0;
 	bestArray.length = 0;
 	bestToFront(population);
-	// Sets number of generations to 200 * the number of cities if not specified
+	// Sets number of generations to 100 * the number of cities if not specified
 	if(!numGenerationsFlag) {
-		numGenerations = population.length * 200;
+		numGenerations = population.length * 100;
 	}
 	for(var i = 1; i <= numGenerations; i++) {
 		population = evolve(population);
