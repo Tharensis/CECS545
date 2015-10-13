@@ -32,7 +32,7 @@
 				</div>
 			</div>
 			<div id="generationValues">
-				<input type="text" id="generations" placeholder=1000>Generations</input>
+				<input type="text" id="generations" placeholder="n * 100">Generations</input>
 			</div>
 			<div id="mutationRateValues">
 				<input type="text" id="mutationRate" placeholder=0.015>Mutation Rate</input>
@@ -41,8 +41,11 @@
 				<input type="text" id="tournamentSize" placeholder=0.10>Tournament Size</input>
 			</div>
 		</div>
+		<div id="animateDiv">
+			<label><input type="checkbox" id="animateToggle" checked>Animate?</input></label>
+		</div>
 		<div id="results">
-			<div id="path">Path...</div>
+			<div id="path">PATH</div>
 			<canvas id="resultCanvas" width="800" height="400" style="border:1px solid #000000;">
 				Your browser is unable to display an HTML5 Canvas. Please upgrade to a newer browser
 			</canvas>

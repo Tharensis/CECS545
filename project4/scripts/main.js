@@ -7,8 +7,14 @@ var mutationRate = 0.015;	// Default mutation rate
 var numGenerations = -1;	// Default number of generations
 var numGenerationsFlag = false;
 var tournamentSize = 0.10;  // Determines percentage of population used to determine parents
-
+var averageArray = [];
+var bestArray = [];
 var population = [];
+var startTime;
+var startFlag;
+var animateFlag = false;
+
+var generation = 0;
 
 // BEGIN OBJECT DEFINITIONS 
 
@@ -27,6 +33,8 @@ function Path(pathArray) {
 
 // This function is called by the HTML file.
 function main(filePath) {
+
+	generation = 0;
 
 	// Immediately check if textbox has values and radio buttons selected
 	var radios = document.getElementsByClassName("required");
@@ -54,6 +62,12 @@ function main(filePath) {
 		tournamentSize = valuePlaceholder;
 	} else {
 		tournamentSize = 0.10;
+	}
+
+	if(document.getElementById("animateToggle").checked) {
+		animateFlag = true;
+	} else {
+		animateFlag = false;
 	}
 
 	if(numChecked == 2) {
@@ -105,16 +119,19 @@ function parseData(fileData) {
 		return;
 	}
 
-	var startTime = window.performance.now();
+
+
 
 	population = generatePopulation(cityList);
+
+
+
+
 	findPath(population, startTime);
 }
 
 function findPath(population, startTime) {
 
-	var averageArray = [];
-	var bestArray = [];
 	averageArray.length = 0;
 	bestArray.length = 0;
 	bestToFront(population);
@@ -122,16 +139,22 @@ function findPath(population, startTime) {
 	if(!numGenerationsFlag) {
 		numGenerations = population.length * 100;
 	}
-	for(var i = 1; i <= numGenerations; i++) {
+	
+	// THIS IS WHERE THE TIMEOUTS SHOULD START
+	startFlag = setInterval(function(){
+		start();
+	}, 1);
+
+	/*for(var i = 1; i <= numGenerations; i++) {
 		population = evolve(population);
 		averageArray.push({x: i, y: averageFitness(population)});
 		bestArray.push({x: i, y: population[0].fitness});
-	}
+	}*/
 
-	var endTime = window.performance.now();
+	//var endTime = window.performance.now();
 
-	displayLineChart(averageArray, bestArray);
-	displayResults(population[0].path, population[0].fitness, endTime - startTime);
+	//displayLineChart(averageArray, bestArray);
+	//displayResults(population[0].path, population[0].fitness, endTime - startTime);
 }
 
 // Moves the best path to the front of the population
@@ -421,10 +444,36 @@ function displayResults(path, distance, time) {
 	pathArea.innerHTML = "<b>Path:</b> " + pathString;
 }
 
+function start() {
+
+	if(generation == 0) {
+		startTime = window.performance.now();
+	}
+
+	population = evolve(population);
+	averageArray.push({x: generation, y: averageFitness(population)});
+	bestArray.push({x: generation, y: population[0].fitness});
+	endTime = window.performance.now();
+
+	if(generation >= numGenerations) {
+		clearTimeout(startFlag);
+		console.log("DONE!");
+		displayResults(population[0].path, population[0].fitness, endTime - startTime);	
+		displayLineChart(averageArray, bestArray);
+		return;
+	}
+
+	if(animateFlag) {
+		displayResults(population[0].path, population[0].fitness, endTime - startTime);	
+		displayLineChart(averageArray, bestArray);
+	}
+	generation++;
+}
+
 function displayLineChart(average, best) {
 	var chart = new CanvasJS.Chart("lineChartContainer", {
 		zoomEnabled: true,
-		animationEnabled: true,
+		animationEnabled: false,
 		title:{
 			text: "Average distance and Best distance"
 		},
