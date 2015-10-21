@@ -1,0 +1,33 @@
+#input {
+	text-align: center;
+}
+
+#variables {
+	margin: 5px;
+	text-align: center;
+}
+
+#results {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 30px;
+	width: 75%;
+}
+
+#lineChartContainer {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#animateDiv {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+th,td {
+	border: 1px solid black;
+	width: 25%;
+}
