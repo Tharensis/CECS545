@@ -2,8 +2,22 @@
 	text-align: center;
 }
 
+#wisdom {
+	text-align: center;
+}
+
 #variables {
-	margin: 5px;
+	text-align: center;
+	float: left;
+	overflow: hidden;
+	width: 50%
+}
+
+#options {
+	overflow: hidden;
+}
+
+#animateDiv {
 	text-align: center;
 }
 
@@ -13,6 +27,11 @@
 	margin-right: auto;
 	margin-top: 30px;
 	width: 75%;
+}
+
+#results canvas {
+	margin-right: 10px;
+	margin-left: 10px;
 }
 
 #lineChartContainer {

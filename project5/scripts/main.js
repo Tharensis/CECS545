@@ -1,8 +1,7 @@
 // Global variables
-var xCoords = [];
-var yCoords = [];
 var runTimes = [];
 var population = [];		// Array of all Path objects in a population
+var cityList = [];			// Contains the list of cities
 var mutationRate = 0.015;	// Default mutation rate
 var numGenerations = -1;	// Default number of generations
 var numGenerationsFlag = false;
@@ -13,6 +12,9 @@ var population = [];
 var startTime;
 var startFlag;
 var animateFlag = false;
+var agreementMatrix = [];
+var crowdRatio = 0.15
+var wisePath = [];			// Is the aggregate path
 
 var generation = 0;
 
@@ -27,6 +29,7 @@ function City(x, y, num) {
 function Path(pathArray) {
 	this.path = JSON.parse(JSON.stringify(pathArray));	// Deep copies path into Path object
 	this.fitness = getDistance(this.path);
+	this.adjacency = createAdjacency(this.path);
 }
 
 // END OBJECT DEFINITIONS
@@ -63,6 +66,11 @@ function main(filePath) {
 	} else {
 		tournamentSize = 0.10;
 	}
+	if(valuePlaceholder = document.getElementById("expertSize").value) {
+		crowdRatio = valuePlaceholder;
+	} else {
+		crowdRatio = 0.15;
+	}
 
 	if(document.getElementById("animateToggle").checked) {
 		animateFlag = true;
@@ -93,7 +101,6 @@ function readFile(filePath) {
 }
 
 function parseData(fileData) {
-	var cityList = [];	// Contains the initial list of cities
 	cityList.length = 0;
 
 	var splitFile = fileData.split("\n");
@@ -119,13 +126,7 @@ function parseData(fileData) {
 		return;
 	}
 
-
-
-
-	population = generatePopulation(cityList);
-
-
-
+	population = generatePopulation(JSON.parse(JSON.stringify(cityList)));
 
 	findPath(population, startTime);
 }
@@ -145,16 +146,6 @@ function findPath(population, startTime) {
 		start();
 	}, 1);
 
-	/*for(var i = 1; i <= numGenerations; i++) {
-		population = evolve(population);
-		averageArray.push({x: i, y: averageFitness(population)});
-		bestArray.push({x: i, y: population[0].fitness});
-	}*/
-
-	//var endTime = window.performance.now();
-
-	//displayLineChart(averageArray, bestArray);
-	//displayResults(population[0].path, population[0].fitness, endTime - startTime);
 }
 
 // Moves the best path to the front of the population
@@ -169,10 +160,6 @@ function bestToFront(population) {
 	}
 	var newBest = population.splice(bestIndex, 1);
 	population.unshift(newBest[0]);
-	//if(population[0].fitness != getDistance(population[0].path)) {
-	//	console.log("NOT EQUAL");
-	//	console.log(population[0].fitness + " " + getDistance(population[0].path));
-	//}
 	return population;
 }
 
@@ -185,6 +172,8 @@ function evolve(population) {
 	// Execute this by population.length
 	// Note: Best member is always added to the new population, so we don't lose it.
 	newPop.push(population[0]);
+	
+
 	for(var i = 1; i < population.length; i++) {
 		for(var j = 0; j < population.length * tournamentSize; j++) {
 			parentPopulation.push(population[Math.floor(Math.random() * population.length)]);
@@ -220,9 +209,74 @@ function evolve(population) {
 		}
 	}
 
-	// Moves best member of population to front.
-	bestToFront(newPop);
+	// Sort array so we can get a proper wisdom of crowds
+	newPop.sort(function(a, b){return a.fitness - b.fitness;});
+
+	wisePath = wisdom(newPop);
+
+	// Kill off a random individual in the bottom 40% by replacing it with the "wise" one
+	// Pick a number between 0.6n and n where n is the number of members of the population
+	var victim = newPop.length - Math.floor(Math.random() * newPop.length * .4) - 1;
+	newPop.splice(victim, 1);	// Member is now dead
+	newPop.push(wisePath);
+	
+	newPop.sort(function(a, b){return a.fitness - b.fitness;});
+
 	return newPop;
+}
+
+function wisdom(population) {
+	// Build the agreement matrix from all members of the population
+	// Sum up all adjacency matrices
+	
+	// Deep copy first member's matrix, so we don't need to create a new 2D matrix
+	agreementMatrix = JSON.parse(JSON.stringify(population[0].adjacency));
+
+	for(var i = 1; i < population.length * crowdRatio; i++) {
+
+		for(var y = 0; y < agreementMatrix.length; y++) {
+			for(var x = 0; x < agreementMatrix.length; x++) {
+				agreementMatrix[y][x] += population[i].adjacency[y][x];
+			}
+		}
+
+	}
+
+	// Calculating the aggregate path with the following process
+	// 1) Start at a random row in the matrix
+	// 2) Look at the city with the max number of agreements
+	// 		a) If city has not yet been added to the aggregate path, add it
+	// 		b) If city already added, check the next best city
+	// 3) Move to the row in the matrix corresponding to the next city
+	
+	var aggregatePath = [];
+	var addedCities = [];
+	var bestItems = [];		// Best possible "next cities" for any given city. Resets every row of the matrix
+	var maxAgreements = 0;
+	
+	var y = Math.floor(Math.random() * agreementMatrix.length); 	// Starts y at a random value
+	addedCities.length = 0;
+	while(aggregatePath.length < agreementMatrix.length) {
+		bestItems.length = 0;
+		for(var x = 0; x < agreementMatrix.length; x++) {
+			bestItems.push({city:x, agreements:agreementMatrix[y][x]});
+		}
+		bestItems.sort(function(a, b){return b.agreements - a.agreements;});
+		while(true) {
+			if(addedCities.indexOf(bestItems[0].city) == -1) {
+				// Add item to path
+				aggregatePath.push(cityList[bestItems[0].city]);
+				addedCities.push(bestItems[0].city);
+				y = bestItems[0].city;
+				break;
+			} else {
+				// Essentially skip to the next item
+				bestItems.shift();
+			}
+		}
+	}
+
+	return new Path(aggregatePath);
 }
 
 // Applies crossover function to two parents and producing one child
@@ -374,10 +428,13 @@ function generatePopulation(cities) {
 
 // Displays results on an HTML5 canvas
 function displayResults(path, distance, time) {
+
 	var i;
 	var textOffset = 3;
 	var pointSize = 2;
 	var canvasScale = 4;
+
+	var yOffset = 15;
 
 	var canvas = document.getElementById("resultCanvas");
 	var ctx = canvas.getContext("2d");
@@ -387,35 +444,29 @@ function displayResults(path, distance, time) {
 	ctx.scale(canvasScale, canvasScale);
 	ctx.font = "3px Arial";
 
-	// This loop corrects the y coordinates, so that y doesn't count
-	// from the top of the canvas. It counts from the bottom
-	for(i = 0; i < yCoords.length; i++) {
-		yCoords[i] = (canvas.height / canvasScale) - parseFloat(yCoords[i]);
-		yCoords[i] = yCoords[i].toString();
-	}
 	
-	// Draw points
-	for(i = 0; i < path.length; i++) {
-		var point = path[i];
-		var x = point.x;
-		//var y = (canvas.height / canvasScale) - point.y;
-		var y = point.y;
-
-		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
-		ctx.fillText(point.num, x + pointSize, y + pointSize);
-	}
 	
 	// Draw lines
 	ctx.beginPath();
 	ctx.strokeStyle="red";
 	ctx.lineWidth = 1;
 		
-	ctx.moveTo(path[0].x, path[0].y);
+	ctx.moveTo(path[0].x, path[0].y + yOffset);
 	for(i = 1; i < path.length; i++) {
-		ctx.lineTo(path[i].x, path[i].y);
+		ctx.lineTo(path[i].x, path[i].y + yOffset);
 	}
-	ctx.lineTo(path[0].x, path[0].y);
+	ctx.lineTo(path[0].x, path[0].y + yOffset);
 	ctx.stroke();
+
+	// Draw points
+	for(i = 0; i < path.length; i++) {
+		var point = path[i];
+		var x = point.x;
+		var y = point.y + yOffset;
+
+		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
+		ctx.fillText(point.num, x + pointSize, y + pointSize);
+	}
 
 	// Calculating average time
 	runTimes.push(time);
@@ -427,8 +478,8 @@ function displayResults(path, distance, time) {
 	average = sum / runTimes.length;
 
 	ctx.fillStyle = "#000000";
-	ctx.fillText("Distance: " + distance, 125, 5);
-	ctx.fillText("Time: " + time/1000 + "s", 125, 8);
+	ctx.fillText("Distance: " + distance, 5, 5);
+	ctx.fillText("Time: " + time/1000 + "s", 5, 8);
 	ctx.scale(1 / canvasScale, 1 / canvasScale);
 
 	var pathString = "";
@@ -444,6 +495,73 @@ function displayResults(path, distance, time) {
 	pathArea.innerHTML = "<b>Path:</b> " + pathString;
 }
 
+// Displays results on an HTML5 canvas
+// For some reason, Javascript wasn't drawing on both canvases when
+// in one function, so I spread it out. Bah.
+function displayAggregate(population, wisePath) {
+	var i;
+	var textOffset = 3;
+	var pointSize = 2;
+	var canvasScale = 4;
+	var path = population[0].path;
+
+	var yOffset = 15;
+
+	var canvas = document.getElementById("aggregateCanvas");
+	var ctx = canvas.getContext("2d");
+	ctx.fillStyle = "white";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = "black";
+	ctx.scale(canvasScale, canvasScale);
+	ctx.font = "3px Arial";
+
+	// Draw points
+	for(i = 0; i < path.length; i++) {
+		var point = path[i];
+		var x = point.x;
+		var y = point.y + yOffset;
+
+		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
+		ctx.fillText(point.num, x + pointSize, y + pointSize);
+	}
+	
+	// Draw lines
+	ctx.beginPath();
+	ctx.strokeStyle="red";
+	ctx.lineWidth = 1;
+		
+	for(var j = 0; j < population.length; j++) {
+		path = population[j].path;
+		ctx.moveTo(path[0].x, path[0].y + yOffset);
+		for(i = 1; i < path.length; i++) {
+			ctx.lineTo(path[i].x, path[i].y + yOffset);
+		}
+		ctx.lineTo(path[0].x, path[0].y + yOffset);
+		ctx.stroke();
+	}
+
+	ctx.beginPath();
+	ctx.strokeStyle="chartreuse";
+	ctx.moveTo(wisePath.path[0].x, wisePath.path[0].y + yOffset);
+	for(i = 1; i < path.length; i++) {
+		ctx.lineTo(wisePath.path[i].x, wisePath.path[i].y + yOffset);
+	}
+	ctx.lineTo(wisePath.path[0].x, wisePath.path[0].y + yOffset);
+	ctx.stroke();
+	 
+	// Draw points
+	for(i = 0; i < path.length; i++) {
+		var point = path[i];
+		var x = point.x;
+		var y = point.y + yOffset;
+
+		ctx.fillRect(x - pointSize/2, y - pointSize/2, pointSize, pointSize);
+		ctx.fillText(point.num, x + pointSize, y + pointSize);
+	}
+
+	ctx.scale(1 / canvasScale, 1 / canvasScale);
+}
+
 function start() {
 
 	if(generation == 0) {
@@ -457,16 +575,18 @@ function start() {
 
 	if(generation >= numGenerations) {
 		clearTimeout(startFlag);
-		console.log("DONE!");
 		displayResults(population[0].path, population[0].fitness, endTime - startTime);	
+		displayAggregate(population, wisePath);	
 		displayLineChart(averageArray, bestArray);
 		return;
 	}
 
 	if(animateFlag) {
 		displayResults(population[0].path, population[0].fitness, endTime - startTime);	
+		displayAggregate(population, wisePath);	
 		displayLineChart(averageArray, bestArray);
 	}
+
 	generation++;
 }
 
@@ -521,6 +641,30 @@ function getDistance(path) {
 	return totalDistance;
 }
 
+function createAdjacency(path) {
+	var matrix = [];
+	// Initialize the 2D matrix
+	for(var i = 0; i < path.length; i++) {
+		matrix[i] = [];
+		for(var j = 0; j < path.length; j++) {
+			matrix[i].push(0);
+		}
+	}
+
+	for(var i = 0; i < path.length; i++) {
+		if(i != path.length - 1) {
+			var city1 = path[i].num - 1;
+			var city2 = path[i + 1].num - 1;
+		} else {
+			var city1 = path[i].num - 1;
+			var city2 = path[0].num - 1;
+		}
+		matrix[city1][city2] = 1;
+		matrix[city2][city1] = 1;
+	}
+	return matrix;
+}
+
 function averageFitness(population) {
 	var totalFitness = 0;
 	for(var i = 0; i < population.length; i++) {
@@ -548,6 +692,18 @@ function DEBUG_PrintFitnesses(population) {
 		newArray.push(population[i].fitness);
 	}
 	console.log(newArray);
+}
+
+function DEBUG_PrintAdjacency(matrix) {
+	var line = "";
+	for(var i = 0; i < matrix.length; i++) {
+		for(var j = 0; j < matrix.length; j++) {
+			line += matrix[i][j] + " ";
+		}
+		console.log(line);
+		line = "";
+	}
+	console.log(" ");
 }
 
 function sleep(delay) {
