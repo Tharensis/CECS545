@@ -578,6 +578,17 @@ function start() {
 		displayResults(population[0].path, population[0].fitness, endTime - startTime);	
 		displayAggregate(population, wisePath);	
 		displayLineChart(averageArray, bestArray);
+		var tempString = "";
+		for(var i = 0; i < population[0].path.length; i++) {
+			if(i != population[0].path.length - 1) {
+				tempString += population[0].path[i].num + ",";
+			} else {
+				tempString += population[0].path[i].num;
+			}
+		}
+		console.log(tempString);
+		console.log(population[0].fitness);
+		console.log((endTime - startTime)/1000);
 		return;
 	}
 
