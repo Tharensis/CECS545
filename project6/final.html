@@ -1,0 +1,33 @@
+<html>
+	<head>
+		<title>Final Project</title>
+		<script src="scripts/main.js"></script>
+		<script src="scripts/canvasjs.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/final.css">
+	</head>
+	<body>
+		<div id="input">
+			<input type="file" id="files" name="files[]" accept=".puzzle" />
+			<button id ="runButton" onclick='main(document.getElementById("files"))' >Solve</button>
+		</div>
+		<div id="options">
+			Options go here
+		</div>
+		<div id="animateDiv">
+			<label><input type="checkbox" id="animateToggle" checked>Animate?</input></label>
+		</div>
+		<div id="results">
+			<div id="path">PATH</div>
+			<canvas id="resultCanvas" width="450" height="500" style="border:1px solid #000000;">
+				Your browser is unable to display an HTML5 Canvas. Please upgrade to a newer browser
+			</canvas>
+			<canvas id="aggregateCanvas" width="450" height ="500" style="border:1px solid #000000;">
+				Your browser is unable to display an HTML5 Canvas. Please upgrade to a newer browser
+			</canvas>
+			<div id="lineChartContainer" style="height: 400; width: 800px;"></div> 
+		</div>
+		<noscript>
+			Please enable JavaScript to view the page.
+		</noscript>
+	</body>
+</html>

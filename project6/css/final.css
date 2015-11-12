@@ -1,0 +1,52 @@
+#input {
+	text-align: center;
+}
+
+#wisdom {
+	text-align: center;
+}
+
+#variables {
+	text-align: center;
+	float: left;
+	overflow: hidden;
+	width: 50%
+}
+
+#options {
+	overflow: hidden;
+}
+
+#animateDiv {
+	text-align: center;
+}
+
+#results {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 30px;
+	width: 75%;
+}
+
+#results canvas {
+	margin-right: 10px;
+	margin-left: 10px;
+}
+
+#lineChartContainer {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#animateDiv {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+th,td {
+	border: 1px solid black;
+	width: 25%;
+}
