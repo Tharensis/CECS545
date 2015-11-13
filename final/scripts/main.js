@@ -1,20 +1,24 @@
 var puzzle;
 var population = []; // Array of "Solution"s in the population. May or may not be valid
-var populationSize = 100;
+var populationSize = 5000;
 
 // BEGIN OBJECT DEFINITIONS
 
 // Solution object will consist of a matrix of 1s and 0s where a 1 is a black square
-function Solution(map) {
-	this.map = JSON.parse(JSON.stringify(map));
+function Solution(locations) {
+	this.locations = JSON.parse(JSON.stringify(locations));
 	this.fitness = getFitness(this);
+}
+
+function Point(x, y) {
+	this.x = x;
+	this.y = y;
 }
 
 // END OBJECT DEFINITIONS
 
 
 function main(filePath) {
-
 	// TODO potentially add more stuff to do after hitting the button, like options
 
 	readFile(filePath);
@@ -70,21 +74,30 @@ function parseData(fileData) {
 
 // Randomly generates an initial population
 function generatePopulation() {
-	var blackProbability = (puzzle.x * puzzle.y) / (puzzle.count / 10);
 	var newGen = [];
+	var tempX;
+	var tempY;
+
+	var hasPoint = false;
 
 	for(var i = 0; i < populationSize; i++) {
-		for(var y = 0; y < puzzle.y; y++) {
-			newGen.push([]);
-			for(var x = 0; x < puzzle.x; x++) {
-				if(puzzle.map[y][x] == "0") {
-					if(Math.random() < (blackProbability / (puzzle.x * puzzle.y))) {
-						newGen[y].push(1);
-					} else {
-						newGen[y].push(0);
+		newGen.length = 0;
+		for(var j = 0; j < puzzle.count / 1; j++) {
+			hasPoint = false;
+			tempX = Math.floor(Math.random() * puzzle.x);
+			tempY = Math.floor(Math.random() * puzzle.y);
+
+			if(puzzle.map[tempY][tempX] == "0") {
+
+				// Check if current solution already has this point
+				for(var k = 0; k < newGen.length; k++) {
+					// If not, add it
+					if(newGen[k].x == tempX && newGen[k].y == tempY) {
+						hasPoint = true;
 					}
-				} else {
-					newGen[y].push(0);
+				}
+				if(!hasPoint) {
+					newGen.push(new Point(tempX, tempY));
 				}
 			}
 		}
@@ -159,17 +172,72 @@ function displayResults(puzzle, solution) {
 			}
 		}
 	}
-
+	
 	// Draw current solution
-	for(var y = 0; y < puzzle.y; y++) {
-		for(var x = 0; x < puzzle.x; x++) {
-			if(solution.map[y][x]) {
-				ctx.fillRect(x * 50, y * 50, 50, 50);
-			}
-		}
+	var xIndex = 0;
+	var yIndex = 0;
+	for(var i = 0; i < solution.locations.length; i++) {
+		xIndex = solution.locations[i].x;
+		yIndex = solution.locations[i].y;
+		ctx.fillRect(xIndex * 50, yIndex * 50, 50, 50);
 	}
 }
 
 function getFitness(solution) {
-	return 0;
+	var fitness = 0;
+	var seen = 0;
+
+	// To grade the fitness, we check the number of squares that each numbered
+	// square is supposed to see versus how many it actually sees.
+	
+	for(var y = 0; y < puzzle.y; y++) {
+		for(var x = 0; x < puzzle.x; x++) {
+			if(puzzle.map[y][x] != "0") {
+				seen = checkSeen(x, y, solution.locations);
+				fitness += Math.abs(seen - parseInt(puzzle.map[y][x]));
+			}
+		}
+	}
+
+	// We will also check to see if any black squares are adjacent.
+
+	return fitness;
+}
+
+// Returns the number of white squares a given numbered-square can see
+function checkSeen(x, y, solution) {
+	// 1) Check the nearest black square to the left and right of the numbered square
+	// 2) Check the nearest black square to the top and bottom of the numbered square
+	
+	var nearestLeft = -1;
+	var nearestRight = puzzle.x;
+	var nearestTop = -1;
+	var nearestBottom = puzzle.y;
+
+	for(var i = 0; i < solution.length; i++) {
+		// Checking nearest x squares
+		if(solution[i].y == y && solution[i].x < x) {
+			if(solution[i].x > nearestLeft) {
+				nearestLeft = solution[i].x;
+			}
+		}
+		if(solution[i].y == y && solution[i].x > x) {
+			if(solution[i].x < nearestRight) {
+				nearestRight = solution[i].x;
+			}
+		}
+
+		// Checking nearest y squares
+		if(solution[i].x == x && solution[i].y < y) {
+			if(solution[i].y > nearestTop) {
+				nearestTop = solution[i].y;
+			}
+		}
+		if(solution[i].x == x && solution[i].y > y) {
+			if(solution[i].y < nearestBottom) {
+				nearestBottom = solution[i].y;
+			}
+		}
+	}
+	return (nearestRight - nearestLeft) + (nearestBottom - nearestTop) - 3;
 }
