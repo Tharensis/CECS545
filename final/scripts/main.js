@@ -107,19 +107,6 @@ function generatePopulation() {
 
 function displayResults(puzzle, solution) {
 
-	// TODO remove default solution
-	/*solution = [
-		[0,	0,	0,	0,	0,	0,	0,	0,	0],
-		[1,	0,	0,	0,	0,	1,	0,	1,	0],
-		[0,	0,	1,	0,	1,	0,	0,	0,	0],
-		[0,	1,	0,	0,	0,	0,	0,	0,	1],
-		[0,	0,	0,	0,	1,	0,	1,	0,	0],
-		[0,	1,	0,	0,	0,	0,	0,	0,	0],
-		[1,	0,	0,	1,	0,	0,	1,	0,	0],
-		[0,	0,	0,	0,	0,	0,	0,	0,	1],
-		[0,	0,	0,	0,	1,	0,	0,	0,	0]
-	];*/
-
 	var canvas = document.getElementById("resultCanvas");
 	var ctx = canvas.getContext("2d");
 	
@@ -199,7 +186,42 @@ function getFitness(solution) {
 		}
 	}
 
-	// We will also check to see if any black squares are adjacent.
+	// Create half-assed matrix of solution just to check for adjacent
+	var tempArray = [];
+	solution.locations.sort(function(a,b){return b.y - a.y;});
+	// Creating 2D array to hold the half-assed matrix
+	for(var i = 0; i < puzzle.y; i++) {
+		tempArray.push([]);
+	}
+	// Half-assed matrix filled
+	for(var i = 0; i < solution.locations.length; i++) {
+		tempArray[solution.locations[i].y][solution.locations[i].x] = 1;
+	}
+
+	// Searching half-assed array to find adjacent black squares
+	for(var y = 0; y < puzzle.y; y++) {
+		for(var x = 0; x < puzzle.x; x++) {
+			if(tempArray[y][x] == 1) {
+				if(tempArray[y][x - 1] == 1) {
+					fitness += 1;
+				}
+				if(tempArray[y][x + 1] == 1) {
+					fitness += 1;
+				}
+				// Need to check if the y dimension is undefined...
+				if(y != 0) {
+					if(tempArray[y - 1][x] == 1) {
+						fitness += 1;
+					}
+				}
+				if(y != puzzle.y - 1) {
+					if(tempArray[y + 1][x] == 1) {
+						fitness += 1;
+					}
+				}
+			}
+		}
+	}
 
 	return fitness;
 }
