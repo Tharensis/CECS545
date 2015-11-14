@@ -1,6 +1,11 @@
+// CONSTANTS
+var populationSize = 5000;
+var tournamentSize = .02;
+// END CONSTANTS
+
 var puzzle;
 var population = []; // Array of "Solution"s in the population. May or may not be valid
-var populationSize = 5000;
+var running;	// Flag used for starting and stopping the interval
 
 // BEGIN OBJECT DEFINITIONS
 
@@ -67,9 +72,52 @@ function parseData(fileData) {
 
 
 	generatePopulation();
-	displayResults(puzzle, population[population.length - 1]);
 
-	//findPath(population, startTime);
+	running = setInterval(function(){
+		solve();
+	}, 1);
+}
+
+function solve() {
+	
+	evolve();
+	//displayResults(puzzle, population[population.length - 1]);
+}
+
+function evolve() {
+	crossover();
+	clearInterval(running);
+	// Crossover
+	// Mutate
+}
+
+function crossover() {
+	// Tournament select
+	// 1) Create (1 / tournamentSize) arrays by removing items from population
+	// 2) Sort arrays
+	// 3) Push the best one back into the population.
+
+	var tournaments = [];
+	var max = population.length;
+	for(var i = 0; i < (1 / tournamentSize); i++) {
+		tournaments.push([]);
+		for(var j = 0; j < max * tournamentSize; j++) {
+			var temp = population.splice(Math.floor(Math.random() * population.length), 1);
+			tournaments[i].push(temp[0]);
+			temp.length = 0;
+		}
+	}
+
+	for(var i = 0; i < tournaments.length; i++) {
+		tournaments[i].sort(function(a,b) {return a.fitness - b.fitness;});
+		population.push(tournaments[0]);
+	}
+
+	// Generate offspring
+}
+
+function mutate() {
+
 }
 
 // Randomly generates an initial population
