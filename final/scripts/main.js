@@ -1,6 +1,6 @@
 // CONSTANTS
 var populationSize = 5000;
-var tournamentSize = .02;
+var tournamentSize = .01;
 // END CONSTANTS
 
 var puzzle;
@@ -81,22 +81,24 @@ function parseData(fileData) {
 function solve() {
 	
 	evolve();
-	//displayResults(puzzle, population[population.length - 1]);
+	displayResults(puzzle, population[population.length - 1]);
+	DEBUG_PrintAverageFitness();
 }
 
 function evolve() {
 	crossover();
-	clearInterval(running);
+	population.sort(function(a,b){return a.fitness - b.fitness;});
 	// Crossover
 	// Mutate
 }
 
+// Does tournament selection and chooses random crossover
 function crossover() {
 	// Tournament select
 	// 1) Create (1 / tournamentSize) arrays by removing items from population
 	// 2) Sort arrays
 	// 3) Push the best one back into the population.
-
+	
 	var tournaments = [];
 	var max = population.length;
 	for(var i = 0; i < (1 / tournamentSize); i++) {
@@ -110,10 +112,60 @@ function crossover() {
 
 	for(var i = 0; i < tournaments.length; i++) {
 		tournaments[i].sort(function(a,b) {return a.fitness - b.fitness;});
-		population.push(tournaments[0]);
+		population.push(tournaments[i][0]);
 	}
 
-	// Generate offspring
+
+	// Pick random crossover function // TODO acually make it random
+	
+	var parentSelections = (populationSize - tournaments.length) / 2;
+	var choice;
+	var parent1;
+	var parent2;
+	var child1 = [];
+	var child2 = [];
+	for(var i = 0; i < parentSelections; i++) {
+		parent1 = population[Math.floor(Math.random() * tournaments.length)];
+		parent2 = population[Math.floor(Math.random() * tournaments.length)];
+		child1.length = 0;
+		child2.length = 0;
+
+		choice = Math.floor(Math.random() * 2) + 1;
+
+		// Crossover 1
+		// 		Create two children by giving the left side of one parent and the right side of another parent
+		
+		// Sort two parents by x so we can distinguish left and right side
+		parent1.locations.sort(function(a,b){return a.x - b.x;});
+		parent2.locations.sort(function(a,b){return a.x - b.x;});
+
+		// Give left side (rounded down) of parent1 to child1
+		//	left side (rounded down) of parent2 to child1
+		//	Do the opposite for child2
+
+		for(var j = 0; j < Math.max(parent1.locations.length, parent2.locations.length); j++) {
+			if(parent1.locations[j]) { // Checking if defined
+				if(parent1.locations[j].x < Math.floor(puzzle.x / 2)) {
+					child1.push(parent1.locations[j]);
+				} else {
+					child2.push(parent1.locations[j]);
+				}
+			}
+			if(parent2.locations[j]) { // Checking if defined
+				if(parent2.locations[j].x < Math.floor(puzzle.x / 2)) {
+					child2.push(parent2.locations[j]);
+				} else {
+					child1.push(parent2.locations[j]);
+				}
+			}
+		}
+
+		population.push(new Solution(child1));
+		population.push(new Solution(child2));
+
+		// Crossover 2
+		// 		Create two children by giving the top of one parent and the bottom of another parent
+	}
 }
 
 function mutate() {
@@ -310,4 +362,20 @@ function checkSeen(x, y, solution) {
 		}
 	}
 	return (nearestRight - nearestLeft) + (nearestBottom - nearestTop) - 3;
+}
+
+function DEBUG_PrintAverageFitness() {
+	var average = 0;
+	for(var i = 0; i < population.length; i++) {
+		average += population[i].fitness;
+	}
+	console.log(average / population.length);
+}
+
+function DEBUG_PrintPointArray(array) {
+	var output = "";
+	for(var i = 0; i < array.length; i++) {
+		output = output + "(" + array[i].x + "," + array[i].y + ") ";
+	}
+	console.log(output);
 }
