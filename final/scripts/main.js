@@ -116,7 +116,7 @@ function crossover() {
 	}
 
 
-	// Pick random crossover function // TODO acually make it random
+	// Pick random crossover function
 	
 	var parentSelections = (populationSize - tournaments.length) / 2;
 	var choice;
@@ -132,39 +132,75 @@ function crossover() {
 
 		choice = Math.floor(Math.random() * 2) + 1;
 
-		// Crossover 1
-		// 		Create two children by giving the left side of one parent and the right side of another parent
-		
-		// Sort two parents by x so we can distinguish left and right side
-		parent1.locations.sort(function(a,b){return a.x - b.x;});
-		parent2.locations.sort(function(a,b){return a.x - b.x;});
+		switch(choice) {
+			case 1:
+				// Crossover 1
+				// 		Create two children by giving the left side of one parent and the right side of another parent
+				
+				// Sort two parents by x so we can distinguish left and right side
+				parent1.locations.sort(function(a,b){return a.x - b.x;});
+				parent2.locations.sort(function(a,b){return a.x - b.x;});
 
-		// Give left side (rounded down) of parent1 to child1
-		//	left side (rounded down) of parent2 to child1
-		//	Do the opposite for child2
+				// Give left side (rounded down) of parent1 to child1
+				//	left side (rounded down) of parent2 to child1
+				//	Do the opposite for child2
 
-		for(var j = 0; j < Math.max(parent1.locations.length, parent2.locations.length); j++) {
-			if(parent1.locations[j]) { // Checking if defined
-				if(parent1.locations[j].x < Math.floor(puzzle.x / 2)) {
-					child1.push(parent1.locations[j]);
-				} else {
-					child2.push(parent1.locations[j]);
+				for(var j = 0; j < Math.max(parent1.locations.length, parent2.locations.length); j++) {
+					if(parent1.locations[j]) { // Checking if defined
+						if(parent1.locations[j].x < Math.floor(puzzle.x / 2)) {
+							child1.push(parent1.locations[j]);
+						} else {
+							child2.push(parent1.locations[j]);
+						}
+					}
+					if(parent2.locations[j]) { // Checking if defined
+						if(parent2.locations[j].x < Math.floor(puzzle.x / 2)) {
+							child2.push(parent2.locations[j]);
+						} else {
+							child1.push(parent2.locations[j]);
+						}
+					}
 				}
-			}
-			if(parent2.locations[j]) { // Checking if defined
-				if(parent2.locations[j].x < Math.floor(puzzle.x / 2)) {
-					child2.push(parent2.locations[j]);
-				} else {
-					child1.push(parent2.locations[j]);
+
+				population.push(new Solution(child1));
+				population.push(new Solution(child2));
+				break;
+
+			case 2:
+				// Crossover 2
+				// 		Create two children by giving the top of one parent and the bottom of another parent
+
+				// Sort two parents by y so we can distinguish top and bottom
+				parent1.locations.sort(function(a,b){return a.y - b.y;});
+				parent2.locations.sort(function(a,b){return a.y - b.y;});
+
+				// Give top (rounded down) of parent1 to child1
+				//	bottom (rounded down) of parent2 to child1
+				//	Do the opposite for child2
+
+				for(var j = 0; j < Math.max(parent1.locations.length, parent2.locations.length); j++) {
+					if(parent1.locations[j]) { // Checking if defined
+						if(parent1.locations[j].y < Math.floor(puzzle.y / 2)) {
+							child1.push(parent1.locations[j]);
+						} else {
+							child2.push(parent1.locations[j]);
+						}
+					}
+					if(parent2.locations[j]) { // Checking if defined
+						if(parent2.locations[j].y < Math.floor(puzzle.y / 2)) {
+							child2.push(parent2.locations[j]);
+						} else {
+							child1.push(parent2.locations[j]);
+						}
+					}
 				}
-			}
+
+				population.push(new Solution(child1));
+				population.push(new Solution(child2));
+				break;
+			default:
+				console.log("WE GOT NOTHING");
 		}
-
-		population.push(new Solution(child1));
-		population.push(new Solution(child2));
-
-		// Crossover 2
-		// 		Create two children by giving the top of one parent and the bottom of another parent
 	}
 }
 
