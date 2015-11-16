@@ -1,7 +1,8 @@
 // CONSTANTS
 var populationSize = 5000;
-var tournamentSize = .01;
+var tournamentSize = 0.01;
 var mutationChance = 0.015;
+var WISDOM_SIZE = 0.1;
 
 // GLOBAL VARIABLES
 var puzzle;
@@ -144,8 +145,9 @@ function evolve() {
 		solved = true;
 		return;
 	}
-	//wisdom();
+	wisdom();
 	population.sort(function(a,b){return a.fitness - b.fitness;});
+
 }
 
 // Does tournament selection and chooses random crossover
@@ -297,7 +299,51 @@ function mutate() {
 }
 
 function wisdom() {
+	// Population is already sorted when this function is called
+	// Create group of "experts" for the aggregate solution.
 	
+	var agreementMatrix = [];
+
+	// Initialize 2D agreement matrix
+	for(var i = 0; i < puzzle.y; i++) {
+		agreementMatrix.push([]);
+		for(var j = 0; j < puzzle.x; j++) {
+			agreementMatrix[i].push(0);
+		}
+	}
+	
+	// Fill agreement matrix
+	for(var i = 0; i < population.length * WISDOM_SIZE; i++) {
+		for(var j = 0; j < population[i].locations.length; j++) {
+			agreementMatrix[population[i].locations[j].y][population[i].locations[j].x] += 1;
+		}
+	}
+
+	// Calculate average "agreements" on any square that is non-zero
+	var total = 0;
+	var count = 0;
+	for(var y = 0; y < agreementMatrix.length; y++) {
+		for(var x = 0; x < agreementMatrix[y].length; x++) {
+			if(agreementMatrix[y][x] != 0) {
+				total += agreementMatrix[y][x];
+				count++;
+			}
+		}
+	}
+	var average = total / count;
+
+	// Add any square greater than "average" to the aggregate solution
+	var aggregate = [];
+	for(var y = 0; y < agreementMatrix.length; y++) {
+		for(var x = 0; x < agreementMatrix[y].length; x++) {
+			if(agreementMatrix[y][x] >= average) {
+				aggregate.push(new Point(x, y));
+			}
+		}
+	}
+
+	// Kill off random member in the bottom 50%
+	population[population.length - (Math.floor(Math.random() * (population.length / 2)) + 1)] = new Solution(aggregate);
 }
 
 // Randomly generates an initial population
@@ -539,4 +585,17 @@ function DEBUG_PrintPointArray(array) {
 		output = output + "(" + array[i].x + "," + array[i].y + ") ";
 	}
 	console.log(output);
+}
+
+function DEBUG_PrintMatrix(matrix) {
+	var str = "";
+	for(var y = 0; y < matrix.length; y++) {
+		for(var x = 0; x < matrix[y].length; x++) {
+			str += matrix[y][x] + "\t";	
+		}
+		if(y != matrix.length - 1) {
+			str += "\n";
+		}
+	}
+	console.log(str);
 }
