@@ -1,15 +1,22 @@
 // CONSTANTS
 var populationSize = 5000;
 var tournamentSize = .01;
-// END CONSTANTS
+var mutationChance = 0.015;
 
+// GLOBAL VARIABLES
 var puzzle;
 var population = []; // Array of "Solution"s in the population. May or may not be valid
 var running;	// Flag used for starting and stopping the interval
+var generation = 0;
+var averageArray = []; // Used for line chart
+var bestArray = [];	   // Used for line chart
+var improveWait = 0;   // Counter that signifies how many generations after an improvement
+var solved = false;
+var currentBest;
 
-// BEGIN OBJECT DEFINITIONS
+// OBJECT DEFINITIONS
 
-// Solution object will consist of a matrix of 1s and 0s where a 1 is a black square
+// Solution object contains a list of black squares
 function Solution(locations) {
 	this.locations = JSON.parse(JSON.stringify(locations));
 	this.fitness = getFitness(this);
@@ -20,11 +27,21 @@ function Point(x, y) {
 	this.y = y;
 }
 
-// END OBJECT DEFINITIONS
-
+// MAIN PROGRAM
 
 function main(filePath) {
-	// TODO potentially add more stuff to do after hitting the button, like options
+
+	// Init variables
+	generation = 0;
+	averageArray.length = 0;
+	bestArray.length = 0;
+	solved = false;
+
+	if(document.getElementById("animateToggle").checked) {
+		animateFlag = true;
+	} else {
+		animateFlag = false;
+	}
 
 	readFile(filePath);
 }
@@ -70,7 +87,12 @@ function parseData(fileData) {
 		}
 	}
 
+	start();
+}
 
+function start() {
+	population.length = 0;
+	currentBest = Number.MAX_VALUE;
 	generatePopulation();
 
 	running = setInterval(function(){
@@ -79,17 +101,51 @@ function parseData(fileData) {
 }
 
 function solve() {
-	
+	generation++;
+	if(improveWait > 100) {
+		clearInterval(running);
+		start();
+	}
+
 	evolve();
-	displayResults(puzzle, population[population.length - 1]);
-	DEBUG_PrintAverageFitness();
+
+	if(population[0].fitness < currentBest) {
+		improveWait = 0;
+		currentBest = population[0].fitness;
+	} else {
+		improveWait++;
+	}
+
+	var totalFitness = 0;
+	for(var i = 0; i < population.length; i++) {
+		totalFitness += population[i].fitness;
+	}
+	averageArray.push({x: generation, y: totalFitness / population.length});
+	bestArray.push({x: generation, y: population[0].fitness});
+
+	if(animateFlag || solved) {
+		displayResults(puzzle, population[0]);
+		displayLineChart(averageArray, bestArray);
+	}
 }
 
 function evolve() {
 	crossover();
 	population.sort(function(a,b){return a.fitness - b.fitness;});
-	// Crossover
-	// Mutate
+	if(population[0].fitness == 0) {
+		clearInterval(running);
+		solved = true;
+		return;
+	}
+	mutate();
+	population.sort(function(a,b){return a.fitness - b.fitness;});
+	if(population[0].fitness == 0) {
+		clearInterval(running);
+		solved = true;
+		return;
+	}
+	//wisdom();
+	population.sort(function(a,b){return a.fitness - b.fitness;});
 }
 
 // Does tournament selection and chooses random crossover
@@ -199,13 +255,49 @@ function crossover() {
 				population.push(new Solution(child2));
 				break;
 			default:
-				console.log("WE GOT NOTHING");
+				console.log("ERROR: Invalid crossover function!");
 		}
 	}
 }
 
 function mutate() {
+	// Check every member of the population to see if it will mutate
+	
+	for(var i = 0; i < population.length; i++) {
+		if(Math.random() < mutationChance) {
+			// Mutate population member
 
+			if(Math.floor(Math.random() * 2) == 0) {
+				// Delete random black square
+				population[i].locations.splice(Math.floor(Math.random() * population[i].locations.length), 1);
+				population[i].fitness = getFitness(population[i]);
+			} else {
+				// Add random black square.
+				var hasPoint = false;
+				var tempX = Math.floor(Math.random() * puzzle.x);
+				var tempY = Math.floor(Math.random() * puzzle.y);
+
+				if(puzzle.map[tempY][tempX] == "0") {
+
+					// Check if current solution already has this point
+					for(var k = 0; k < population[i].length; k++) {
+						// If not, add it
+						if(population[i].locations[k].x == tempX && population[i].locations[k].y == tempY) {
+							hasPoint = true;
+						}
+					}
+					if(!hasPoint) {
+						population[i].locations.push(new Point(tempX, tempY));
+						population[i].fitness = getFitness(population[i]);
+					}
+				}
+			}
+		}
+	}
+}
+
+function wisdom() {
+	
 }
 
 // Randomly generates an initial population
@@ -218,7 +310,7 @@ function generatePopulation() {
 
 	for(var i = 0; i < populationSize; i++) {
 		newGen.length = 0;
-		for(var j = 0; j < puzzle.count / 1; j++) {
+		for(var j = 0; j < puzzle.count * 1; j++) {
 			hasPoint = false;
 			tempX = Math.floor(Math.random() * puzzle.x);
 			tempY = Math.floor(Math.random() * puzzle.y);
@@ -304,6 +396,39 @@ function displayResults(puzzle, solution) {
 		yIndex = solution.locations[i].y;
 		ctx.fillRect(xIndex * 50, yIndex * 50, 50, 50);
 	}
+}
+
+function displayLineChart(average, best) {
+	var chart = new CanvasJS.Chart("lineChartContainer", {
+		zoomEnabled: true,
+		animationEnabled: false,
+		title:{
+			text: "Average and best fitness"
+		},
+		axisX: {
+			labelAngle: -30
+		},
+		axisY: {
+			includeZero: true
+		},
+		data: [
+		{
+			type: "line",
+			showInLegend: true,
+			lineThickness: 2,
+			name: "Best Fitness",
+			dataPoints: best
+		},
+		{
+			type: "line",
+			showInLegend: true,
+			lineThickness: 2,
+			name: "Average Fitness",
+			dataPoints: average
+		}
+		]
+	});
+	chart.render();
 }
 
 function getFitness(solution) {
