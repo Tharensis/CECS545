@@ -11,15 +11,29 @@ function main(filePath) {
 
 // Reads the provided file to store.
 function readFile(filePath) {
-	var reader = new FileReader();
-	if(filePath && filePath.files[0]) {
-		reader.onload = function(e) {
-			// Sends result of the file to parseData
-			parseData(e.target.result);
+	
+	if(filePath) {
+		var data = [];
+		var files = filePath.files;
+		var j = 0, k = files.length;
+		for (var i = 0; i < k; i++) {
+			var reader = new FileReader();
+			reader.onloadend = function (evt) {
+				if (evt.target.readyState == FileReader.DONE) {
+					data[j] = evt.target.result;
+					j++;
+					if (j == k){
+						for(var dataLoop = 0; dataLoop < data.length; dataLoop++) {
+							parseData(data[dataLoop]);
+						}
+					}
+				}
+			};
+			//reader.readAsBinaryString(files[i]);
+			reader.readAsText(files[i]);
 		}
-		reader.readAsText(filePath.files[0]);
 	} else {
-		alert("No file selected.");
+		alert("No file selected");
 	}
 }
 
