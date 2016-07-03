@@ -57,7 +57,7 @@ function parseData(fileData) {
 	var minimumDistance = 0;
 	var minimumPath;
 
-	var startTime = new Date().getTime();
+	var startTime = window.performance.now();
 
 	// Generates all permutations and looks up distance for each
 	for(n = 0; n < factorial(array.length - 1); n++) {
@@ -75,7 +75,7 @@ function parseData(fileData) {
 		}
 	}
 
-	var endTime = new Date().getTime();
+	var endTime = window.performance.now();
 
 	// Adds the original city to the end of the path.
 	minimumPath.push(minimumPath[0]);
